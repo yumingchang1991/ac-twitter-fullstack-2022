@@ -40,6 +40,15 @@
         <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/tweets"}}color: #FF6600;{{/ifCond}}">首頁</span>
       </a>
     </div>
+
+    <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
+      <a href="/chatroom" class="flex-grow-1 d-flex justify-content-start">
+        <img class="me-3" width="24" height="24"
+          src="/images/{{#ifCond path "/chatroom"}}icon-orange-message{{else}}icon-black-message{{/ifCond}}.png">
+        <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/chatroom"}}color: #FF6600;{{/ifCond}}">公開聊天室</span>
+      </a>
+    </div>
+
     <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
       <a href="/users/{{loginUser.id}}/tweets" class="flex-grow-1 d-flex justify-content-start">
         <img class="me-3" src="/images/nav-icon-mobile-profile{{#ifCond path "/users"}}-selected{{/ifCond}}.png"

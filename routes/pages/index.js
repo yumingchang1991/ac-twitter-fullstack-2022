@@ -8,6 +8,7 @@ const users = require('./modules/users')
 
 const adminController = require('../../controllers/pages/admin-controller')
 const userController = require('../../controllers/pages/user-controller')
+const chatController = require('../../controllers/pages/chat-controller')
 
 const { authenticated, authenticatedAdmin } = require('../../middleware/auth')
 const { generalErrorHandler } = require('../../middleware/error-handler')
@@ -35,6 +36,8 @@ router.put('/setting', authenticated, userController.editSetting)
 
 router.post('/followships', authenticated, userController.addFollowship)
 router.delete('/followships/:followingId', authenticated, userController.deleteFollowship)
+
+router.get('/chatroom', authenticated, chatController.publicChatRoom)
 
 // fallback route
 router.use('/', (req, res) => res.redirect('/tweets'))

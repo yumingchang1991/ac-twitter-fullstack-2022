@@ -472,3 +472,32 @@ a:hover {
 .admin-user-card .card-body {
   padding-top: 94px;
 }
+
+.chat-header {
+  height: 35px;
+}
+
+#online-users, #chat-messages {
+  list-style: none;
+}
+
+.broadcast {
+  width: 200px;
+  margin: 5px auto;
+  text-align: center;
+
+  background-color: #E5E5E5;
+  border-radius: 10px;
+}
+
+#chat-form {
+  width: 43%;
+  position: fixed;
+  bottom: 10px;
+}
+
+#chat-submit {
+  background-color: var(--white);
+  border: none;
+
+}

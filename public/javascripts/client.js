@@ -4,6 +4,8 @@ if (path === '/signup' || path === '/setting') {
   addScript('/signup')
 } else if (path.slice(0, 6) === '/users') {
   addScript('/users')
+} else if (path.slice(0, 5) === '/chat') {
+  addScript('/chat')
 }
 
 function addScript (route) {
