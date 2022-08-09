@@ -41,6 +41,13 @@
       </a>
     </div>
     <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
+      <a href="/users/chatroom/public" class="flex-grow-1 d-flex justify-content-start">
+        <img class="me-3" src="/images/nav-icon-mobile-home{{#ifCond path "/users/chatroom"}}-selected{{/ifCond}}.png" width="24"
+          height="24">
+        <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/users/chatroom"}}color: #FF6600;{{/ifCond}}">公開聊天室</span>
+      </a>
+    </div>
+    <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
       <a href="/users/{{loginUser.id}}/tweets" class="flex-grow-1 d-flex justify-content-start">
         <img class="me-3" src="/images/nav-icon-mobile-profile{{#ifCond path "/users"}}-selected{{/ifCond}}.png"
           width="24" height="24">

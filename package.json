@@ -23,6 +23,7 @@
     "express-handlebars": "^6.0.6",
     "express-session": "^1.15.6",
     "faker": "^4.1.0",
+    "http": "^0.0.1-security",
     "imgur": "^1.0.2",
     "method-override": "^3.0.0",
     "mocha": "^6.0.2",
@@ -34,7 +35,9 @@
     "sequelize": "^6.18.0",
     "sequelize-cli": "^5.5.0",
     "sinon": "^10.0.0",
-    "sinon-chai": "^3.3.0"
+    "sinon-chai": "^3.3.0",
+    "socket.io": "^4.5.1",
+    "socket.io-client": "^4.5.1"
   },
   "devDependencies": {
     "eslint": "^7.32.0",

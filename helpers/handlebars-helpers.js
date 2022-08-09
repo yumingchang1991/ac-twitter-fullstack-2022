@@ -13,5 +13,9 @@ module.exports = {
   numberformat: number => {
     if (number >= 1000) return `${Math.floor(number / 100) / 10}k`
     return number
+  },
+  isRestPath: path => {
+    if (path === '/users/chatroom' || path === '/setting') return false
+    return true
   }
 }

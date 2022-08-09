@@ -1,0 +1,15 @@
+<div class="col-4 p-0 border-start border-end">
+  <div class="vh-100 d-flex flex-column">
+    {{> chatroom-header context='上線使用者'}}
+    <div class="flex-grow-1 d-flex flex-column justify-content-start">
+      <ul id="connected-users-list" class="list-group"></ul>
+    </div>
+  </div>
+</div>
+<div class="col-6 p-0 border-end">
+  <div class="messages">
+    {{> messages}}
+  </div>
+  {{{body}}}
+</div>
+<script src='/socket.io/socket.io.js'></script>

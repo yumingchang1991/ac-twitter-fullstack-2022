@@ -1,0 +1,13 @@
+<div class="vh-100 d-flex flex-column">
+  {{> chatroom-header context='公開聊天室'}}
+  <div id="chat-message-wrapper" class="flex-grow-1 d-flex flex-column" style="overflow-y: scroll;">
+    <ul id='chat-message-list' class="flex-grow-1 list-group d-flex flex-column justify-content-end">
+    </ul>
+  </div>
+  <div class="d-flex align-items-center border-top">
+    <input class="mx-2 my-3 bg-light form-control chat-message" type="text" placeholder="輸入訊息..." id="chatMessage" name="chatMessage" style="border-radius: 50px;">
+    <div class="btn btn-link mx-2 send-button">
+      <img id="send-icon" src="/images/icon_send.png" width="24" height="24">
+    </div>
+  </div>
+</div>

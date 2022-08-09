@@ -1,0 +1,6 @@
+<header class="mt-2 p-2 pb-4" style="border-bottom: 1px solid #E6ECF0; font-weight: bold; font-size: 24px;">
+  <span>{{ context }}</span>
+  {{#ifCond context '上線使用者'}}
+  <span>(<span id="connection-count">0</span>)</span>
+  {{/ifCond}}
+</header>

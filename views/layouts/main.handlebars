@@ -27,22 +27,16 @@
     <div class="col-2">
       {{> left-nav}}
     </div>
-    {{#if (isAdmin loginUser.role)}}
-    <div class="col-10 p-0">
-      {{> messages}}
-      {{{body}}}
-    </div>
-    {{else}}
-    <div class="col-7 overflow-visible">
-      <div class="messages">
-      {{> messages}}
-      </div>
-      {{{body}}}
-    </div>
-    <div class="col-3" {{#ifCond path "/setting"}}style="visibility: hidden"{{/ifCond}}>
-      {{> right-nav}}
-    </div>
-    {{/if}}
+    {{#ifCond loginUser.role 'admin'}}
+      {{> main-layout-one-column}}
+    {{/ifCond}}
+
+    {{#ifCond loginUser.role 'user'}}
+      {{#ifCond path "/setting"}}{{> main-layout-one-column}}{{/ifCond}}
+      {{#ifCond path "/users/chatroom"}}{{> main-layout-chatroom}}{{/ifCond}}
+      {{#if (isRestPath path)}}{{> main-layout-two-columns}}{{/if}}
+    {{/ifCond}}
+
   </div>
 
   {{else}}
