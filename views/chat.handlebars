@@ -1,15 +1,18 @@
 <div class="d-none" id="self-id">{{id}}</div>
-<div class="row border" style="height: 1000px;">
-  <div class="col-4 border">
-    <div class="chat-header">上線使用者</div>
+<div class="row border p-0 position-fixed" style="height: 100vh; width: 70%;">
+  <div class="col-4 border p-0">
+    <div class="chat-header">
+      <span>上線使用者</span>
+      <span id="online-users-count">(0)</span>
+    </div>
     <div id="online-users"></div>
   </div>
 
-  <div class="col-8 border">
-    <div class="chat-header">公開聊天室</div>
-    <ul id="chat-messages"></ul>
+  <div class="col-8 border p-0">
+    <h5 class="chat-header">公開聊天室</h5>
+    <div id="chat-messages"></div>
     <form id="chat-form">
-      <input id="chat-input" style="width: 90%;">
+      <input id="chat-input" placeholder="輸入訊息...">
       <button id="chat-submit">
         <img src="/images/icon-orange-submit.png">
       </button>

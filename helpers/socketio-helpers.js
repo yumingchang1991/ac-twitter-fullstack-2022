@@ -5,13 +5,17 @@ const addUser = user => {
     return
   }
   users.push(user)
-  console.log(users)
+  // console.log(users)
+  return user
 }
 
 const removeUser = id => {
   const removeId = users.findIndex(user => user.id === id)
+  const user = users[removeId]
+
   users.splice(removeId, 1)
-  // console.log(users)
+  // console.log(user)
+  return user
 }
 
 const getUsers = room => {
