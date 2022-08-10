@@ -9,8 +9,8 @@ const addUser = user => {
   return user
 }
 
-const removeUser = id => {
-  const removeId = users.findIndex(user => user.id === id)
+const removeUser = socketId => {
+  const removeId = users.findIndex(user => user.soketId === socketId)
   const user = users[removeId]
 
   users.splice(removeId, 1)

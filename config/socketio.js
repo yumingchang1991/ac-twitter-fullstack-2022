@@ -1,5 +1,24 @@
 const dayjs = require('dayjs')
 const { addUser, getUsers, removeUser } = require('../helpers/socketio-helpers')
+const { Message, User } = require('../models')
+
+function group(data, key) {
+  const result = []
+  data.forEach(value => {
+    let index = result.findIndex(element => element[key] === value[key])
+
+    if (index < 0) {
+      index = result.push({
+        createdAt: value[key],
+        messages: []
+      }) - 1
+    }
+
+    result[index].messages.push(value)
+  })
+
+  return result
+}
 
 module.exports = io => {
   io.on('connection', socket => {
@@ -7,15 +26,38 @@ module.exports = io => {
 
     socket.on('user connected', data => {
       const user = JSON.parse(data)
-      user.id = socket.id
-
+      user.socketId = socket.id
       socket.userdata = addUser(user)
+
+      Message.findAll({
+        include: [{ model: User, as: 'sender' }],
+        where: { receiverId: null },
+        raw: true,
+        nest: true
+      })
+        .then(messages => {
+          messages = messages.map(m => ({
+            ...m,
+            createdAt: dayjs(m.createdAt).format('YYYY-MM-DD'),
+            time: dayjs(m.createdAt).format('a HH:mm'),
+            selfMsg: m.sender.id === socket.userdata.id
+          }))
+          messages = group(messages, 'createdAt')
+
+          socket.emit('history', JSON.stringify(messages))
+        })
+
       io.emit('updateUserList', JSON.stringify(getUsers()))
       socket.broadcast.emit('broadcast', `${user.name}上線`)
     })
 
     socket.on('chat message', msg => {
       const time = dayjs(new Date()).format('a HH:mm')
+
+      Message.create({
+        description: msg,
+        senderId: socket.userdata.id
+      })
 
       socket.emit('chat message', JSON.stringify({ ...socket.userdata, msg, selfMsg: true, time }))
       socket.broadcast.emit('chat message', JSON.stringify({ ...socket.userdata, msg, time }))

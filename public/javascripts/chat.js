@@ -6,13 +6,48 @@ const onlineUsers = document.querySelector('#online-users')
 const onlineUsersCount = document.querySelector('#online-users-count')
 const chatMessages = document.querySelector('#chat-messages')
 
+function renderMessage(avatar, msg, selfMsg, time) {
+  const item = document.createElement('div')
+  item.className = 'd-flex mb-2'
+  if (selfMsg) {
+    item.innerHTML = `
+      <div class="msg-self" style="max-width: 80%;">
+        <p class="chat-msg">${msg}</p>
+        <p class="chat-time">${time}</p>
+      </div>
+    `
+  } else {
+    item.innerHTML = `
+      <img src="${avatar}" class="user-avatar" style="height: 40px; width: 40px;">
+      <div style="max-width: 80%;">
+        <p class="chat-msg">${msg}</p>
+        <p class="chat-time">${time}</p>
+      </div>
+    `
+  }
+  chatMessages.appendChild(item)
+}
+
 socket.on('connect', () => {
   const id = document.querySelector('#self-id').textContent
   axios.get(`/api/users/${id}`)
     .then(res => {
-      const user = (({ name, account, avatar }) => ({ name, account, avatar }))(res.data)
+      const user = (({ id, name, account, avatar }) => ({ id, name, account, avatar }))(res.data)
       socket.emit('user connected', JSON.stringify(user))
     })
+})
+
+socket.on('history', data => {
+  JSON.parse(data).forEach(value => {
+    const date = document.createElement('div')
+    date.className = 'broadcast'
+    date.textContent = value.createdAt
+    chatMessages.appendChild(date)
+
+    value.messages.forEach(el => {
+      renderMessage(el.sender.avatar, el.description, el.selfMsg, el.time)
+    })
+  })
 })
 
 socket.on('updateUserList', users => {
@@ -40,26 +75,8 @@ socket.on('broadcast', msg => {
 
 socket.on('chat message', data => {
   const { avatar, msg, selfMsg, time } = JSON.parse(data)
-  const item = document.createElement('div')
+  renderMessage(avatar, msg, selfMsg, time)
 
-  item.className = 'd-flex mb-2'
-  if (selfMsg) {
-    item.innerHTML = `
-      <div class="msg-self" style="max-width: 80%;">
-        <p class="chat-msg">${msg}</p>
-        <p class="chat-time">${time}</p>
-      </div>
-    `
-  } else {
-    item.innerHTML = `
-      <img src="${avatar}" class="user-avatar" style="height: 40px; width: 40px;">
-      <div style="max-width: 80%;">
-        <p class="chat-msg">${msg}</p>
-        <p class="chat-time">${time}</p>
-      </div>
-    `
-  }
-  chatMessages.appendChild(item)
   chatMessages.scrollTo(0, chatMessages.scrollHeight)
 })
 
