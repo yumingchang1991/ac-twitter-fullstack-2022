@@ -6,7 +6,7 @@ const onlineUsers = document.querySelector('#online-users')
 const onlineUsersCount = document.querySelector('#online-users-count')
 const chatMessages = document.querySelector('#chat-messages')
 
-function renderMessage(avatar, msg, selfMsg, time) {
+function renderMessage (avatar, msg, selfMsg, time) {
   const item = document.createElement('div')
   item.className = 'd-flex mb-2'
   if (selfMsg) {
@@ -40,7 +40,7 @@ socket.on('connect', () => {
 socket.on('history', data => {
   JSON.parse(data).forEach(value => {
     const date = document.createElement('div')
-    date.className = 'broadcast'
+    date.className = 'chatroom-date'
     date.textContent = value.createdAt
     chatMessages.appendChild(date)
 
@@ -48,6 +48,10 @@ socket.on('history', data => {
       renderMessage(el.sender.avatar, el.description, el.selfMsg, el.time)
     })
   })
+  const item = document.createElement('p')
+  item.className = 'broadcast'
+  item.textContent = '----------新訊息----------'
+  chatMessages.appendChild(item)
 })
 
 socket.on('updateUserList', users => {
@@ -56,8 +60,8 @@ socket.on('updateUserList', users => {
     item += `
       <div class="user-list-card">
         <img src="${user.avatar}" class="user-avatar" style="height: 50px; width: 50px;">
-        <span>${user.name}</span>
-        <span>@${user.account}</span>
+        <span class="font-bold user-name">${user.name}</span>
+        <span class="user-account">@${user.account}</span>
       </div>
     `
   })
@@ -66,7 +70,7 @@ socket.on('updateUserList', users => {
 })
 
 socket.on('broadcast', msg => {
-  const item = document.createElement('li')
+  const item = document.createElement('div')
   item.className = 'broadcast'
   item.textContent = msg
   chatMessages.appendChild(item)

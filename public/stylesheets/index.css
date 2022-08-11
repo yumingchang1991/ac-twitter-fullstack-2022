@@ -483,7 +483,7 @@ a:hover {
   vertical-align: middle;
   font-weight: 700;
   font-size: 24px;
-  line-height: 26px; 
+  line-height: 26px;
 }
 
 .user-list-card {
@@ -494,17 +494,21 @@ a:hover {
 }
 
 #online-users,
-#chat-messages {
+.chat-messages-container {
   height: 80vh;
-  list-style: none;
+}
+
+.chat-messages-container {
+  padding: 0 16px;
+
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
 }
 
 #chat-messages {
-  padding: 0 16px;
-  /* display: flex;
-  flex-direction: column;
-  justify-content: flex-end; */
-  overflow-y: scroll;
+  margin-top: auto;
+  margin-bottom: 0;
 }
 
 .broadcast {
@@ -513,6 +517,17 @@ a:hover {
   text-align: center;
   color: #657786;
   background-color: #E5E5E5;
+  border-radius: 10px;
+}
+
+.chatroom-date {
+  width: 120px;
+  margin: 5px auto;
+  text-align: center;
+  font-size: 12px;
+  line-height: 12px;
+  color: #666666;
+  background-color: #F2F2F2;
   border-radius: 10px;
 }
 
@@ -551,7 +566,6 @@ a:hover {
   font-weight: 400;
   font-size: 13px;
   line-height: 13px;
-  text-align: right;
 }
 
 .msg-self {
@@ -563,4 +577,8 @@ a:hover {
   color: var(--white);
   background: var(--brand-main);
   border-radius: 25px 25px 0px 25px;
+}
+
+.msg-self .chat-time {
+  text-align: right;
 }

@@ -2,7 +2,7 @@ const dayjs = require('dayjs')
 const { addUser, getUsers, removeUser } = require('../helpers/socketio-helpers')
 const { Message, User } = require('../models')
 
-function group(data, key) {
+function group (data, key) {
   const result = []
   data.forEach(value => {
     let index = result.findIndex(element => element[key] === value[key])
