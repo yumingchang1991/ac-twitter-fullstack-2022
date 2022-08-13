@@ -4,8 +4,10 @@ if (path === '/signup' || path === '/setting') {
   addScript('/signup')
 } else if (path.slice(0, 6) === '/users') {
   addScript('/users')
-} else if (path.slice(0, 5) === '/chat') {
-  addScript('/chat')
+} else if (path === '/chatroom') {
+  addScript('/publicChatroom')
+} else if (path === '/privateChat') {
+  addScript('/privateChat')
 }
 
 function addScript (route) {

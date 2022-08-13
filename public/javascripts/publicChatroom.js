@@ -1,4 +1,4 @@
-const socket = io()
+const socket = io('/chatroom')
 
 const chatForm = document.querySelector('#chat-form')
 const chatInput = document.querySelector('#chat-input')
@@ -84,7 +84,7 @@ socket.on('chat message', data => {
   chatMessages.scrollTo(0, chatMessages.scrollHeight)
 })
 
-chatForm.addEventListener('submit', event => {
+chatForm?.addEventListener('submit', event => {
   event.preventDefault()
   if (chatInput.value) {
     socket.emit('chat message', chatInput.value)

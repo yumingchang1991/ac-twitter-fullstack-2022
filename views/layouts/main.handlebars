@@ -38,15 +38,21 @@
           {{{body}}}
         </div>
       {{else}}
-        <div class="col-7 overflow-visible">
-          <div class="messages">
-          {{> messages}}
+        {{#ifCond path '/privateChat'}}
+          <div class="col-10 p-0">
+            {{{body}}}
           </div>
-          {{{body}}}
-        </div>
-        <div class="col-3" {{#ifCond path "/setting"}}style="visibility: hidden"{{/ifCond}}>
-          {{> right-nav}}
-        </div>
+        {{else}}
+          <div class="col-7 overflow-visible">
+            <div class="messages">
+            {{> messages}}
+            </div>
+            {{{body}}}
+          </div>
+          <div class="col-3" {{#ifCond path "/setting"}}style="visibility: hidden"{{/ifCond}}>
+            {{> right-nav}}
+          </div>
+        {{/ifCond}}
       {{/ifCond}}
     {{/if}}
   </div>

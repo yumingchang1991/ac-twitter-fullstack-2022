@@ -44,8 +44,15 @@
     <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
       <a href="/chatroom" class="flex-grow-1 d-flex justify-content-start">
         <img class="me-3" width="24" height="24"
-          src="/images/{{#ifCond path "/chatroom"}}icon-orange-message{{else}}icon-black-message{{/ifCond}}.png">
+          src="/images/{{#ifCond path "/chatroom"}}icon-orange-chat{{else}}icon-black-chat{{/ifCond}}.png">
         <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/chatroom"}}color: #FF6600;{{/ifCond}}">公開聊天室</span>
+      </a>
+    </div>
+    <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
+      <a href="/privateChat" class="flex-grow-1 d-flex justify-content-start">
+        <img class="me-3" width="24" height="24"
+          src="/images/{{#ifCond path "/privateChat"}}icon-orange-message{{else}}icon-black-message{{/ifCond}}.png">
+        <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/privateChat"}}color: #FF6600;{{/ifCond}}">私人訊息</span>
       </a>
     </div>
 

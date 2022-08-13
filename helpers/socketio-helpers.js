@@ -5,7 +5,6 @@ const addUser = user => {
     return
   }
   users.push(user)
-  // console.log(users)
   return user
 }
 
