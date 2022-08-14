@@ -8,6 +8,10 @@ const chatController = {
   privateChatRoom: (req, res, next) => {
     const { id } = helper.getUser(req)
     res.render('chat', { id })
+  },
+  privateChat: (req, res, next) => {
+    const { id } = helper.getUser(req)
+    res.render('chat', { id })
   }
 }
 

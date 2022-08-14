@@ -6,7 +6,7 @@ if (path === '/signup' || path === '/setting') {
   addScript('/users')
 } else if (path === '/chatroom') {
   addScript('/publicChatroom')
-} else if (path === '/privateChat') {
+} else if (path.slice(0, 12) === '/privateChat') {
   addScript('/privateChat')
 }
 

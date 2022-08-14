@@ -1,4 +1,5 @@
 const socket = io('/privateChat')
+const otherId = location.pathname.slice(13)
 
 const selfId = document.querySelector('#self-id').textContent
 const chatForm = document.querySelector('#chat-form')
@@ -30,32 +31,27 @@ function renderMessage (avatar, msg, selfMsg = false, time) {
 }
 
 socket.on('connect', () => {
-  axios.get(`/api/users/${selfId}`)
-    .then(res => {
-      const user = (({ id, name, account, avatar }) => ({ id, name, account, avatar }))(res.data)
-      socket.emit('user connected', JSON.stringify(user))
-    })
+  socket.emit('user connected', JSON.stringify({ selfId, otherId }))
+  if (otherId) {
+    chatForm.style.display = 'block'
+    chatMessages.innerHTML = ''
+  }
 })
 
 socket.on('updateUserList', users => {
+  let item = ''
   JSON.parse(users).forEach(user => {
-    const item = document.createElement('div')
-    item.className = 'user-list-card'
-    item.dataset.id = user.id
-    item.innerHTML = `
-      <img src="${user.avatar}" class="user-avatar" style="height: 50px; width: 50px;">
-      <span class="font-bold user-name">${user.name}</span>
-      <span class="user-account">@${user.account}</span>
+    item += `
+      <a href="/privateChat/${user.id}">
+        <div class="user-list-card ${user.id == otherId ? 'active' : ''}">
+          <img src="${user.avatar}" class="user-avatar" style="height: 50px; width: 50px;">
+          <span class="font-bold user-name">${user.name}</span>
+          <span class="user-account">@${user.account}</span>
+        </div>
+      </a>
     `
-    item.addEventListener('click', event => {
-      chatForm.style.display = 'block'
-      const id = event.target.dataset.id
-      chatMessages.innerHTML = ''
-      socket.emit('join room', id)
-      socket.emit('get messages', id)
-    })
-    onlineUsers.appendChild(item)
   })
+  onlineUsers.innerHTML = item
 })
 
 socket.on('history', data => {

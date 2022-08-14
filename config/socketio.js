@@ -89,16 +89,25 @@ module.exports = io => {
   // private chat
   io.of('/privateChat').on('connect', socket => {
     socket.on('user connected', data => {
-      const user = JSON.parse(data)
-      socket.userdata = user
+      const { selfId, otherId } = JSON.parse(data)
       Promise.all([
+        // 本人資料
+        User.findByPk(selfId, {
+          raw: true,
+          nest: true
+        }),
+        // 聊天對象個人資料
+        User.findByPk(otherId, {
+          raw: true,
+          nest: true
+        }),
         // user發送訊息的對象
         Message.findAll({
           attributes: [],
           include: [{ model: User, as: 'receiver' }],
           where: {
             [Op.and]: {
-              senderId: user.id,
+              senderId: selfId,
               receiverId: { [Op.not]: null }
             }
           },
@@ -110,13 +119,26 @@ module.exports = io => {
         Message.findAll({
           attributes: [],
           include: [{ model: User, as: 'sender' }],
-          where: { receiverId: user.id },
+          where: { receiverId: selfId },
           group: ['senderId'],
+          raw: true,
+          nest: true
+        }),
+        // 兩人聊天紀錄
+        Message.findAll({
+          where: {
+            [Op.or]: [
+              { [Op.and]: [{ senderId: selfId }, { receiverId: otherId }] },
+              { [Op.and]: [{ senderId: otherId }, { receiverId: selfId }] }
+            ]
+          },
+          order: [['createdAt', 'ASC']],
           raw: true,
           nest: true
         })
       ])
-        .then(([receivers, senders]) => {
+        .then(([selfUser, otherUser, receivers, senders, messages]) => {
+          socket.userdata = selfUser
           receivers = receivers.map(r => ({
             ...r.receiver
           }))
@@ -129,37 +151,15 @@ module.exports = io => {
               return arr.findIndex(el => el.id === v.id) === i
             })
           socket.emit('updateUserList', JSON.stringify(users))
-        })
-    })
 
-    socket.on('join room', id => {
-      socket.leave(socket.room)
-      socket.receiverId = id
-      const room = (socket.userdata.id < id) ? `${socket.userdata.id}-${id}` : `${id}-${socket.userdata.id}`
-      socket.room = room
-      socket.join(room)
-    })
+          // 加入兩人房間
+          socket.leave(socket.room)
+          socket.receiverId = otherId
+          const room = (socket.userdata.id < otherId) ? `${socket.userdata.id}-${otherId}` : `${otherId}-${socket.userdata.id}`
+          socket.room = room
+          socket.join(room)
 
-    socket.on('get messages', othersId => {
-      const myId = socket.userdata.id
-      Promise.all([
-        User.findByPk(othersId, {
-          raw: true,
-          nest: true
-        }),
-        Message.findAll({
-          where: {
-            [Op.or]: [
-              { [Op.and]: [{ senderId: myId }, { receiverId: othersId }] },
-              { [Op.and]: [{ senderId: othersId }, { receiverId: myId }] }
-            ]
-          },
-          order: [['createdAt', 'ASC']],
-          raw: true,
-          nest: true
-        })
-      ])
-        .then(([otherUser, messages]) => {
+          // 聊天紀錄資料處理
           messages = messages.map(message => {
             if (message.senderId === socket.userdata.id) {
               message = addSocketIdInData(message, socket.id)
@@ -170,22 +170,23 @@ module.exports = io => {
 
           socket.emit('history', JSON.stringify({ otherUser, messages }))
         })
+    })
 
-      socket.on('chat message', msg => {
-        const time = dayjs(new Date()).format('a HH:mm')
+    socket.on('chat message', msg => {
+      const time = dayjs(new Date()).format('a HH:mm')
 
-        Message.create({
-          description: msg,
-          senderId: socket.userdata.id,
-          receiverId: socket.receiverId
-        })
-
-        io.of('/privateChat').to(socket.room)
-          .emit('chat message', JSON.stringify({ ...socket.userdata, msg, time, socketId: socket.id }))
+      Message.create({
+        description: msg,
+        senderId: socket.userdata.id,
+        receiverId: socket.receiverId
       })
-      socket.on('disconnected', () => {
-        socket.leave(socket.room)
-      })
+
+      io.of('/privateChat').to(socket.room)
+        .emit('chat message', JSON.stringify({ ...socket.userdata, msg, time, socketId: socket.id }))
+    })
+
+    socket.on('disconnected', () => {
+      socket.leave(socket.room)
     })
   })
 }

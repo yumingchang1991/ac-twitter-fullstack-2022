@@ -11,9 +11,11 @@
           data-bs-toggle="modal" data-bs-target="#edit-user-modal">編輯個人資料</button>
       {{else}}
         <div class="user-option" style="display: inline;">
-          <button class="text-decoration-none message">
-            <img src="/images/icon-orange-message.png">
-          </button>
+          <a href="/privateChat/{{user.id}}">
+            <button class="text-decoration-none message">
+              <img src="/images/icon-orange-message.png">
+            </button>
+          </a>
           <button class="text-decoration-none notification">
             <img src="/images/icon-orange-notification.png">
           </button>

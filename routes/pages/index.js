@@ -39,6 +39,7 @@ router.delete('/followships/:followingId', authenticated, userController.deleteF
 
 router.get('/chatroom', authenticated, chatController.publicChatRoom)
 router.get('/privateChat', authenticated, chatController.privateChatRoom)
+router.get('/privateChat/:chatterId', authenticated, chatController.privateChat)
 
 // fallback route
 router.use('/', (req, res) => res.redirect('/tweets'))

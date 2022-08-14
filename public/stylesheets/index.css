@@ -487,15 +487,18 @@ a:hover {
 }
 
 .user-list-card {
-  height: 66px;
-  padding: 0 16px;
-  margin-top: 16px;
+  height: 84px;
+  padding: 16px;
   border-bottom: 1px solid #E6ECF0;
 }
 
 #online-users,
 .chat-messages-container {
   height: 80vh;
+}
+
+#online-users .active {
+  border-right: var(--brand-main) 2px solid;
 }
 
 .chat-messages-container {
