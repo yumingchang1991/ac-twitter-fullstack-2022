@@ -20,19 +20,19 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     item.className = 'd-flex mb-2'
     if (selfMsg) {
       item.innerHTML = `
-    <div class="msg-self" style="max-width: 80%;">
-    <p class="chat-msg">${msg}</p>
-    <p class="chat-time">${time}</p>
-    </div>
-    `
+        <div class="msg-self" style="max-width: 80%;">
+          <p class="chat-msg">${msg}</p>
+          <p class="chat-time">${time}</p>
+        </div>
+      `
     } else {
       item.innerHTML = `
-    <img src="${avatar}" class="user-avatar" style="height: 40px; width: 40px;">
-    <div style="max-width: 80%;">
-    <p class="chat-msg">${msg}</p>
-    <p class="chat-time">${time}</p>
-    </div>
-    `
+        <img src="${avatar}" class="user-avatar" style="height: 40px; width: 40px;">
+        <div style="max-width: 80%;">
+          <p class="chat-msg">${msg}</p>
+          <p class="chat-time">${time}</p>
+        </div>
+      `
     }
     chatMessages.appendChild(item)
   }
@@ -40,25 +40,27 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
   socket.on('connect', () => {
     const selfId = document.querySelector('#self-id').textContent
 
-    socket.emit('user connected', JSON.stringify({ selfId, otherId }))
     if (otherId) {
+      socket.emit('user:connected with other', JSON.stringify({ selfId, otherId }))
       chatForm.style.display = 'block'
       chatMessages.innerHTML = ''
+    } else {
+      socket.emit('user:connected', selfId)
     }
   })
 
-  socket.on('updateUserList', users => {
+  socket.on('user:updateList', users => {
     let item = ''
     JSON.parse(users).forEach(user => {
       item += `
-    <a href="/privateChat/${user.id}">
-    <div class="user-list-card ${user.id == otherId ? 'active' : ''}">
-    <img src="${user.avatar}" class="user-avatar" style="height: 50px; width: 50px;">
-    <span class="font-bold user-name">${user.name}</span>
-    <span class="user-account">@${user.account}</span>
-    </div>
-    </a>
-    `
+        <a href="/privateChat/${user.id}">
+          <div class="user-list-card ${user.id == otherId ? 'active' : ''}">
+            <img src="${user.avatar}" class="user-avatar" style="height: 50px; width: 50px;">
+            <span class="font-bold user-name">${user.name}</span>
+            <span class="user-account">@${user.account}</span>
+          </div>
+        </a>
+      `
     })
     if (onlineUsersCount) {
       onlineUsersCount.textContent = `(${JSON.parse(users).length})`
@@ -66,14 +68,14 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     onlineUsers.innerHTML = item
   })
 
-  socket.on('private history', data => {
+  socket.on('history:private', data => {
     const { otherUser, messages } = JSON.parse(data)
     const header = document.querySelectorAll('.chat-header')[1]
     header.style.paddingTop = '15px'
     header.innerHTML = `
-  <p class="user-name" style="margin: 0;">${otherUser.name}</p>
-  <p class="user-account">@${otherUser.account}</p>
-  `
+      <p class="user-name" style="margin: 0;">${otherUser.name}</p>
+      <p class="user-account">@${otherUser.account}</p>
+    `
     messages.forEach(value => {
       const date = document.createElement('div')
       date.className = 'chatroom-date'
@@ -88,7 +90,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     chatMessagesContainer.scrollTo(0, chatMessages.scrollHeight)
   })
 
-  socket.on('public history', data => {
+  socket.on('history:public', data => {
     JSON.parse(data).forEach(value => {
       const date = document.createElement('div')
       date.className = 'chatroom-date'
@@ -129,7 +131,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
   })
 }
 
-mainSocket.on('noti private', () => {
+mainSocket.on('notify:private', () => {
   const noti = document.querySelector('#private-noti')
   noti.style.display = 'block'
 })

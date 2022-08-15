@@ -36,13 +36,23 @@ function historyMessageFormat (message) {
 module.exports = io => {
   // notification
   io.of('/').on('connection', socket => {
-    const room = String(socket.request.user.id)
-    console.log('   join room: ', room)
-    socket.join(room)
+    const userId = String(socket.request.user.id)
+    socket.join(userId)
+
+    Message.findOne({
+      where: {
+        receiverId: userId,
+        isread: false
+      }
+    })
+      .then(message => {
+        if (message) {
+          socket.emit('notify:private')
+        }
+      })
 
     socket.on('disconnect', () => {
-      console.log('   leaving room: ', room)
-      socket.leave(room)
+      socket.leave(userId)
     })
   })
 
@@ -50,8 +60,7 @@ module.exports = io => {
   io.of('/chatroom').on('connection', socket => {
     console.log('a user is connected')
 
-    socket.on('user connected', data => {
-      const { selfId } = JSON.parse(data)
+    socket.on('user:connected', selfId => {
       Promise.all([
         User.findByPk(selfId, {
           raw: true,
@@ -76,9 +85,9 @@ module.exports = io => {
           })
           messages = group(messages, 'createdAt')
 
-          socket.emit('public history', JSON.stringify(messages))
+          socket.emit('history:public', JSON.stringify(messages))
 
-          io.of('/chatroom').emit('updateUserList', JSON.stringify(getUsers()))
+          io.of('/chatroom').emit('user:updateList', JSON.stringify(getUsers()))
           socket.broadcast.emit('broadcast', `${user.name}上線`)
         })
     })
@@ -99,14 +108,62 @@ module.exports = io => {
       console.log('a user disconnect')
       const user = removeUser(socket.id)
 
-      io.of('/chatroom').emit('updateUserList', JSON.stringify(getUsers()))
+      io.of('/chatroom').emit('user:updateList', JSON.stringify(getUsers()))
       socket.broadcast.emit('broadcast', `${user.name}離線`)
     })
   })
 
   // private chat
   io.of('/privateChat').on('connect', socket => {
-    socket.on('user connected', data => {
+    socket.on('user:connected', selfId => {
+      Promise.all([
+        // 本人資料
+        User.findByPk(selfId, {
+          raw: true,
+          nest: true
+        }),
+        // user發送訊息的對象
+        Message.findAll({
+          attributes: [],
+          include: [{ model: User, as: 'receiver' }],
+          where: {
+            [Op.and]: {
+              senderId: selfId,
+              receiverId: { [Op.not]: null }
+            }
+          },
+          group: ['receiverId'],
+          raw: true,
+          nest: true
+        }),
+        // user為接收者的對象
+        Message.findAll({
+          attributes: [],
+          include: [{ model: User, as: 'sender' }],
+          where: { receiverId: selfId },
+          group: ['senderId'],
+          raw: true,
+          nest: true
+        })
+      ])
+        .then(([selfUser, receivers, senders]) => {
+          socket.userdata = selfUser
+          receivers = receivers.map(r => ({
+            ...r.receiver
+          }))
+          senders = senders.map(s => ({
+            ...s.sender
+          }))
+          // 合併receivers和senders，並移除重複
+          const users = receivers.concat(senders)
+            .filter((v, i, arr) => {
+              return arr.findIndex(el => el.id === v.id) === i
+            })
+          socket.emit('user:updateList', JSON.stringify(users))
+        })
+    })
+
+    socket.on('user:connected with other', data => {
       const { selfId, otherId } = JSON.parse(data)
       Promise.all([
         // 本人資料
@@ -153,7 +210,11 @@ module.exports = io => {
           order: [['createdAt', 'ASC']],
           raw: true,
           nest: true
-        })
+        }),
+        Message.update({ isread: true }, {
+          where: { [Op.and]: [{ senderId: otherId }, { receiverId: selfId }] }
+        }
+        )
       ])
         .then(([selfUser, otherUser, receivers, senders, messages]) => {
           socket.userdata = selfUser
@@ -168,7 +229,7 @@ module.exports = io => {
             .filter((v, i, arr) => {
               return arr.findIndex(el => el.id === v.id) === i
             })
-          socket.emit('updateUserList', JSON.stringify(users))
+          socket.emit('user:updateList', JSON.stringify(users))
 
           // 加入兩人房間
           socket.leave(socket.room)
@@ -186,7 +247,7 @@ module.exports = io => {
           })
           messages = group(messages, 'createdAt')
 
-          socket.emit('private history', JSON.stringify({ otherUser, messages }))
+          socket.emit('history:private', JSON.stringify({ otherUser, messages }))
         })
     })
 
@@ -201,7 +262,7 @@ module.exports = io => {
 
       io.of('/privateChat').to(socket.room)
         .emit('chat message', JSON.stringify({ ...socket.userdata, msg, time, socketId: socket.id }))
-      io.of('/').to(socket.receiverId).emit('noti private')
+      io.of('/').to(socket.receiverId).emit('notify:private')
     })
 
     socket.on('disconnected', () => {
