@@ -585,3 +585,16 @@ a:hover {
 .msg-self .chat-time {
   text-align: right;
 }
+
+.notify-dot {
+  height: 8px;
+  width: 8px;
+  
+  background: #FF6600;
+  border: 1px solid #FFFFFF;
+  border-radius: 30px;
+
+  position: absolute;
+  left: 13%;
+  top: -5%;
+}

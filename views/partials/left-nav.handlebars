@@ -48,7 +48,8 @@
         <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/chatroom"}}color: #FF6600;{{/ifCond}}">公開聊天室</span>
       </a>
     </div>
-    <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
+    <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center position-relative">
+      <div class="notify-dot" id="private-noti" style="display: none;"></div>
       <a href="/privateChat" class="flex-grow-1 d-flex justify-content-start">
         <img class="me-3" width="24" height="24"
           src="/images/{{#ifCond path "/privateChat"}}icon-orange-message{{else}}icon-black-message{{/ifCond}}.png">

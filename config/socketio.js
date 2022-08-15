@@ -34,35 +34,53 @@ function historyMessageFormat (message) {
 }
 
 module.exports = io => {
+  // notification
+  io.of('/').on('connection', socket => {
+    const room = String(socket.request.user.id)
+    console.log('   join room: ', room)
+    socket.join(room)
+
+    socket.on('disconnect', () => {
+      console.log('   leaving room: ', room)
+      socket.leave(room)
+    })
+  })
+
   // public chatroom
   io.of('/chatroom').on('connection', socket => {
     console.log('a user is connected')
 
     socket.on('user connected', data => {
-      const user = JSON.parse(data)
-      user.socketId = socket.id
-      socket.userdata = addUser(user)
+      const { selfId } = JSON.parse(data)
+      Promise.all([
+        User.findByPk(selfId, {
+          raw: true,
+          nest: true
+        }),
+        Message.findAll({
+          include: [{ model: User, as: 'sender' }],
+          where: { receiverId: null },
+          raw: true,
+          nest: true
+        })
+      ])
+        .then(([user, messages]) => {
+          user.socketId = socket.id
+          socket.userdata = addUser(user)
 
-      Message.findAll({
-        include: [{ model: User, as: 'sender' }],
-        where: { receiverId: null },
-        raw: true,
-        nest: true
-      })
-        .then(messages => {
-          messages = messages.map(m => ({
-            ...m,
-            createdAt: dayjs(m.createdAt).format('YYYY-MM-DD'),
-            time: dayjs(m.createdAt).format('a HH:mm'),
-            selfMsg: m.sender.id === socket.userdata.id
-          }))
+          messages = messages.map(m => {
+            if (m.sender.id === socket.userdata.id) {
+              m = addSocketIdInData(m, socket.id)
+            }
+            return historyMessageFormat(m)
+          })
           messages = group(messages, 'createdAt')
 
-          socket.emit('history', JSON.stringify(messages))
-        })
+          socket.emit('public history', JSON.stringify(messages))
 
-      io.of('/chatroom').emit('updateUserList', JSON.stringify(getUsers()))
-      socket.broadcast.emit('broadcast', `${user.name}上線`)
+          io.of('/chatroom').emit('updateUserList', JSON.stringify(getUsers()))
+          socket.broadcast.emit('broadcast', `${user.name}上線`)
+        })
     })
 
     socket.on('chat message', msg => {
@@ -168,7 +186,7 @@ module.exports = io => {
           })
           messages = group(messages, 'createdAt')
 
-          socket.emit('history', JSON.stringify({ otherUser, messages }))
+          socket.emit('private history', JSON.stringify({ otherUser, messages }))
         })
     })
 
@@ -183,6 +201,7 @@ module.exports = io => {
 
       io.of('/privateChat').to(socket.room)
         .emit('chat message', JSON.stringify({ ...socket.userdata, msg, time, socketId: socket.id }))
+      io.of('/').to(socket.receiverId).emit('noti private')
     })
 
     socket.on('disconnected', () => {

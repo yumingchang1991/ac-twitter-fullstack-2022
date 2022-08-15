@@ -17,6 +17,7 @@ const handlebarsHelpers = require('./helpers/handlebars-helpers')
 const { pages, apis } = require('./routes')
 
 const SESSION_SECRET = process.env.SESSION_SECRET || 'twitterSECRET'
+const sessionMiddleware = session({ secret: SESSION_SECRET, resave: false, saveUninitialized: false })
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -34,7 +35,7 @@ app.set('view engine', 'handlebars')
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
-app.use(session({ secret: SESSION_SECRET, resave: false, saveUninitialized: false }))
+app.use(sessionMiddleware)
 app.use(passport.initialize())
 app.use(passport.session())
 app.use(flash())
@@ -51,13 +52,17 @@ app.use((req, res, next) => {
   next()
 })
 
-// const wrap = middleware => {
-//   return (socket, next) =>
-//     middleware(socket.request, {}, next)
-// }
-// io.use(wrap(session({ secret: SESSION_SECRET, resave: false, saveUninitialized: false })))
-// io.use(wrap(passport.initialize()))
-// io.use(wrap(passport.session()))
+const wrap = middleware => (socket, next) => middleware(socket.request, {}, next)
+io.of('/').use(wrap(sessionMiddleware))
+io.of('/').use(wrap(passport.initialize()))
+io.of('/').use(wrap(passport.session()))
+io.of('/').use((socket, next) => {
+  if (socket.request.user) {
+    next()
+  } else {
+    next(new Error('unauthorized'))
+  }
+})
 socketioConfig(io)
 
 app.use('/api', apis)

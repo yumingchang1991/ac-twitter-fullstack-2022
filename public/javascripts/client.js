@@ -4,10 +4,11 @@ if (path === '/signup' || path === '/setting') {
   addScript('/signup')
 } else if (path.slice(0, 6) === '/users') {
   addScript('/users')
-} else if (path === '/chatroom') {
-  addScript('/publicChatroom')
-} else if (path.slice(0, 12) === '/privateChat') {
-  addScript('/privateChat')
+}
+
+// 除註冊、登入頁及後台外，其他皆須通知
+if (!['/signup', '/signin'].includes(path) && path.slice(0, 6) !== '/admin') {
+  addScript('/socketio')
 }
 
 function addScript (route) {
