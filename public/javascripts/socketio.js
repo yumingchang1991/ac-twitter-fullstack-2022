@@ -1,4 +1,17 @@
 const mainSocket = io('/')
+
+mainSocket.on('connect', () => {
+  mainSocket.emit('message:checkRead')
+})
+mainSocket.on('notify:private', () => {
+  const noti = document.querySelector('#private-noti')
+  noti.style.display = 'block'
+})
+mainSocket.on('notify:noneprivate', () => {
+  const noti = document.querySelector('#private-noti')
+  noti.style.display = 'none'
+})
+
 if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/privateChat') {
   let socket = null
   if (location.pathname === '/chatroom') {
@@ -8,6 +21,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
   }
   const otherId = location.pathname.slice(13)
 
+  const selfId = document.querySelector('#self-id').textContent
   const chatForm = document.querySelector('#chat-form')
   const chatInput = document.querySelector('#chat-input')
   const onlineUsers = document.querySelector('#online-users')
@@ -38,10 +52,9 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
   }
 
   socket.on('connect', () => {
-    const selfId = document.querySelector('#self-id').textContent
-
     if (otherId) {
       socket.emit('user:connected with other', JSON.stringify({ selfId, otherId }))
+      socket.emit('message:read', JSON.stringify({ selfId, otherId }))
       chatForm.style.display = 'block'
       chatMessages.innerHTML = ''
     } else {
@@ -53,11 +66,19 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     let item = ''
     JSON.parse(users).forEach(user => {
       item += `
-        <a href="/privateChat/${user.id}">
+        <a href="/privateChat/${user.id}" data-id="${user.id}">
           <div class="user-list-card ${user.id == otherId ? 'active' : ''}">
             <img src="${user.avatar}" class="user-avatar" style="height: 50px; width: 50px;">
-            <span class="font-bold user-name">${user.name}</span>
-            <span class="user-account">@${user.account}</span>
+            <div class="ms-2 w-100">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="font-bold user-name m-0">${user.name}</span>
+                  <span class="user-account">@${user.account}</span>
+                </div>
+                <span id="newest-msg-time">${user.time}</span>
+              </div>
+              <p id="newest-msg">${user.description}</p>
+            </div>
           </div>
         </a>
       `
@@ -105,6 +126,8 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     item.className = 'broadcast'
     item.textContent = '----------新訊息----------'
     chatMessages.appendChild(item)
+
+    chatMessagesContainer.scrollTo(0, chatMessages.scrollHeight)
   })
 
   socket.on('broadcast', msg => {
@@ -120,6 +143,18 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
 
     renderMessage(avatar, msg, socketId === socket.id, time)
     chatMessagesContainer.scrollTo(0, chatMessages.scrollHeight)
+    if (otherId) {
+      const userList = document.querySelector('#online-users')
+      const userCard = document.querySelector('#online-users .active').parentElement
+      const newestMsg = document.querySelector('#online-users .active #newest-msg')
+      const newestTime = document.querySelector('#online-users .active #newest-msg-time')
+
+      newestMsg.textContent = msg.length > 20 ? msg.substring(0, 20) + '...' : msg
+      newestTime.textContent = '幾秒'
+      userList.prepend(userCard)
+
+      socket.emit('message:read', JSON.stringify({ selfId, otherId }))
+    }
   })
 
   chatForm?.addEventListener('submit', event => {
@@ -130,8 +165,3 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     }
   })
 }
-
-mainSocket.on('notify:private', () => {
-  const noti = document.querySelector('#private-noti')
-  noti.style.display = 'block'
-})

@@ -490,6 +490,7 @@ a:hover {
   height: 84px;
   padding: 16px;
   border-bottom: 1px solid #E6ECF0;
+  display: flex;
 }
 
 #online-users,

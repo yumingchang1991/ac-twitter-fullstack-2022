@@ -1,37 +1,7 @@
 const dayjs = require('dayjs')
 const { Op } = require('sequelize')
-const { addUser, getUsers, removeUser } = require('../helpers/socketio-helpers')
+const { addUser, getUsers, removeUser, group, addSocketIdInData, historyMessageFormat, databaseHelpers } = require('../helpers/socketio-helpers')
 const { Message, User } = require('../models')
-
-function group (data, key) {
-  const result = []
-  data.forEach(value => {
-    let index = result.findIndex(element => element[key] === value[key])
-
-    if (index < 0) {
-      index = result.push({
-        createdAt: value[key],
-        messages: []
-      }) - 1
-    }
-
-    result[index].messages.push(value)
-  })
-
-  return result
-}
-
-function addSocketIdInData (data, socketId) {
-  return { ...data, socketId }
-}
-
-function historyMessageFormat (message) {
-  return {
-    ...message,
-    createdAt: dayjs(message.createdAt).format('YYYY-MM-DD'),
-    time: dayjs(message.createdAt).format('a HH:mm')
-  }
-}
 
 module.exports = io => {
   // notification
@@ -39,17 +9,15 @@ module.exports = io => {
     const userId = String(socket.request.user.id)
     socket.join(userId)
 
-    Message.findOne({
-      where: {
-        receiverId: userId,
-        isread: false
+    socket.on('message:checkRead', async () => {
+      const message = await databaseHelpers.checkRead(userId)
+
+      if (message) {
+        socket.emit('notify:private')
+      } else {
+        socket.emit('notify:noneprivate')
       }
     })
-      .then(message => {
-        if (message) {
-          socket.emit('notify:private')
-        }
-      })
 
     socket.on('disconnect', () => {
       socket.leave(userId)
@@ -60,36 +28,29 @@ module.exports = io => {
   io.of('/chatroom').on('connection', socket => {
     console.log('a user is connected')
 
-    socket.on('user:connected', selfId => {
-      Promise.all([
-        User.findByPk(selfId, {
-          raw: true,
-          nest: true
-        }),
-        Message.findAll({
-          include: [{ model: User, as: 'sender' }],
-          where: { receiverId: null },
-          raw: true,
-          nest: true
-        })
-      ])
-        .then(([user, messages]) => {
-          user.socketId = socket.id
-          socket.userdata = addUser(user)
+    socket.on('user:connected', async selfId => {
+      const user = await databaseHelpers.getUser(selfId)
 
-          messages = messages.map(m => {
-            if (m.sender.id === socket.userdata.id) {
-              m = addSocketIdInData(m, socket.id)
-            }
-            return historyMessageFormat(m)
-          })
-          messages = group(messages, 'createdAt')
+      user.socketId = socket.id
+      socket.userdata = addUser(user)
 
-          socket.emit('history:public', JSON.stringify(messages))
+      let messages = await Message.findAll({
+        include: [{ model: User, as: 'sender' }],
+        where: { receiverId: null },
+        raw: true,
+        nest: true
+      })
+      messages = messages.map(m => {
+        if (m.sender.id === socket.userdata.id) {
+          m = addSocketIdInData(m, socket.id)
+        }
+        return historyMessageFormat(m)
+      })
 
-          io.of('/chatroom').emit('user:updateList', JSON.stringify(getUsers()))
-          socket.broadcast.emit('broadcast', `${user.name}上線`)
-        })
+      socket.emit('history:public', JSON.stringify(group(messages, 'createdAt')))
+
+      io.of('/chatroom').emit('user:updateList', JSON.stringify(getUsers()))
+      socket.broadcast.emit('broadcast', `${user.name}上線`)
     })
 
     socket.on('chat message', msg => {
@@ -100,8 +61,7 @@ module.exports = io => {
         senderId: socket.userdata.id
       })
 
-      socket.emit('chat message', JSON.stringify({ ...socket.userdata, msg, selfMsg: true, time }))
-      socket.broadcast.emit('chat message', JSON.stringify({ ...socket.userdata, msg, time }))
+      io.of('/chatroom').emit('chat message', JSON.stringify({ ...socket.userdata, msg, time }))
     })
 
     socket.on('disconnect', () => {
@@ -115,140 +75,66 @@ module.exports = io => {
 
   // private chat
   io.of('/privateChat').on('connect', socket => {
-    socket.on('user:connected', selfId => {
-      Promise.all([
-        // 本人資料
-        User.findByPk(selfId, {
-          raw: true,
-          nest: true
-        }),
-        // user發送訊息的對象
-        Message.findAll({
-          attributes: [],
-          include: [{ model: User, as: 'receiver' }],
-          where: {
-            [Op.and]: {
-              senderId: selfId,
-              receiverId: { [Op.not]: null }
-            }
-          },
-          group: ['receiverId'],
-          raw: true,
-          nest: true
-        }),
-        // user為接收者的對象
-        Message.findAll({
-          attributes: [],
-          include: [{ model: User, as: 'sender' }],
-          where: { receiverId: selfId },
-          group: ['senderId'],
-          raw: true,
-          nest: true
-        })
-      ])
-        .then(([selfUser, receivers, senders]) => {
-          socket.userdata = selfUser
-          receivers = receivers.map(r => ({
-            ...r.receiver
-          }))
-          senders = senders.map(s => ({
-            ...s.sender
-          }))
-          // 合併receivers和senders，並移除重複
-          const users = receivers.concat(senders)
-            .filter((v, i, arr) => {
-              return arr.findIndex(el => el.id === v.id) === i
-            })
-          socket.emit('user:updateList', JSON.stringify(users))
-        })
+    socket.on('user:connected', async selfId => {
+      const selfUser = await databaseHelpers.getUser(selfId)
+      const privateChatList = await databaseHelpers.getprivateChatUserList(selfId)
+
+      socket.userdata = selfUser
+
+      socket.emit('user:updateList', JSON.stringify(privateChatList))
     })
 
-    socket.on('user:connected with other', data => {
+    socket.on('user:connected with other', async data => {
       const { selfId, otherId } = JSON.parse(data)
-      Promise.all([
-        // 本人資料
-        User.findByPk(selfId, {
-          raw: true,
-          nest: true
-        }),
-        // 聊天對象個人資料
-        User.findByPk(otherId, {
-          raw: true,
-          nest: true
-        }),
-        // user發送訊息的對象
-        Message.findAll({
-          attributes: [],
-          include: [{ model: User, as: 'receiver' }],
-          where: {
-            [Op.and]: {
-              senderId: selfId,
-              receiverId: { [Op.not]: null }
-            }
-          },
-          group: ['receiverId'],
-          raw: true,
-          nest: true
-        }),
-        // user為接收者的對象
-        Message.findAll({
-          attributes: [],
-          include: [{ model: User, as: 'sender' }],
-          where: { receiverId: selfId },
-          group: ['senderId'],
-          raw: true,
-          nest: true
-        }),
-        // 兩人聊天紀錄
-        Message.findAll({
-          where: {
-            [Op.or]: [
-              { [Op.and]: [{ senderId: selfId }, { receiverId: otherId }] },
-              { [Op.and]: [{ senderId: otherId }, { receiverId: selfId }] }
-            ]
-          },
-          order: [['createdAt', 'ASC']],
-          raw: true,
-          nest: true
-        }),
-        Message.update({ isread: true }, {
-          where: { [Op.and]: [{ senderId: otherId }, { receiverId: selfId }] }
+      socket.userdata = await databaseHelpers.getUser(selfId)
+      const otherUser = await databaseHelpers.getUser(otherId)
+      const privateChatUserList = await databaseHelpers.getprivateChatUserList(selfId)
+
+      if (!privateChatUserList.some(el => el.id === otherUser.id)) {
+        privateChatUserList.push(otherUser)
+      }
+
+      // 兩人聊天紀錄
+      let messages = await Message.findAll({
+        where: {
+          [Op.or]: [
+            { [Op.and]: [{ senderId: selfId }, { receiverId: otherId }] },
+            { [Op.and]: [{ senderId: otherId }, { receiverId: selfId }] }
+          ]
+        },
+        order: [['createdAt', 'ASC']],
+        raw: true,
+        nest: true
+      })
+      // 聊天紀錄資料處理
+      messages = messages.map(message => {
+        if (message.senderId === socket.userdata.id) {
+          message = addSocketIdInData(message, socket.id)
         }
-        )
-      ])
-        .then(([selfUser, otherUser, receivers, senders, messages]) => {
-          socket.userdata = selfUser
-          receivers = receivers.map(r => ({
-            ...r.receiver
-          }))
-          senders = senders.map(s => ({
-            ...s.sender
-          }))
-          // 合併receivers和senders，並移除重複
-          const users = receivers.concat(senders)
-            .filter((v, i, arr) => {
-              return arr.findIndex(el => el.id === v.id) === i
-            })
-          socket.emit('user:updateList', JSON.stringify(users))
+        return historyMessageFormat(message)
+      })
+      messages = group(messages, 'createdAt')
 
-          // 加入兩人房間
-          socket.leave(socket.room)
-          socket.receiverId = otherId
-          const room = (socket.userdata.id < otherId) ? `${socket.userdata.id}-${otherId}` : `${otherId}-${socket.userdata.id}`
-          socket.room = room
-          socket.join(room)
+      // 加入兩人房間
+      socket.leave(socket.room)
+      socket.receiverId = otherId
+      const room = (socket.userdata.id < otherId) ? `${socket.userdata.id}-${otherId}` : `${otherId}-${socket.userdata.id}`
+      socket.room = room
+      socket.join(room)
 
-          // 聊天紀錄資料處理
-          messages = messages.map(message => {
-            if (message.senderId === socket.userdata.id) {
-              message = addSocketIdInData(message, socket.id)
-            }
-            return historyMessageFormat(message)
-          })
-          messages = group(messages, 'createdAt')
+      socket.emit('user:updateList', JSON.stringify(privateChatUserList))
+      socket.emit('history:private', JSON.stringify({ otherUser, messages }))
+    })
 
-          socket.emit('history:private', JSON.stringify({ otherUser, messages }))
-        })
+    socket.on('message:read', async data => {
+      const { selfId, otherId } = JSON.parse(data)
+      await databaseHelpers.updateRead(selfId, otherId)
+      const message = await databaseHelpers.checkRead(selfId)
+      if (message) {
+        io.of('/').to(selfId).emit('notify:private')
+      } else {
+        io.of('/').to(selfId).emit('notify:noneprivate')
+      }
     })
 
     socket.on('chat message', msg => {
