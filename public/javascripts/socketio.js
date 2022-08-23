@@ -75,9 +75,9 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
                   <span class="font-bold user-name m-0">${user.name}</span>
                   <span class="user-account">@${user.account}</span>
                 </div>
-                <span id="newest-msg-time">${user.time}</span>
+                <span id="newest-msg-time">${user.time || ''}</span>
               </div>
-              <p id="newest-msg">${user.description}</p>
+              <p id="newest-msg">${user.description || ''}</p>
             </div>
           </div>
         </a>

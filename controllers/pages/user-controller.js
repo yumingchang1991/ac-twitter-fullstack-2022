@@ -91,7 +91,12 @@ const userConroller = {
       .then(([user, tweets]) => {
         if (!user || isAdmin(user)) throw new Error('使用者不存在')
 
-        user.isFollowing = req.user?.Followings.some(following => following.id === user.id)
+        req.user?.Followings.forEach(following => {
+          if (following.id === user.id) {
+            user.isFollowing = true
+            user.isSubscribing = following.Followship.subscription
+          }
+        })
         tweets = tweets.map(tweet => ({
           ...tweet.toJSON(),
           isLiked: req.user?.Likes.some(like => like.TweetId === tweet.id)
@@ -118,7 +123,12 @@ const userConroller = {
       .then(([user, replies]) => {
         if (!user || isAdmin(user)) throw new Error('使用者不存在')
 
-        user.isFollowing = req.user?.Followings.some(following => following.id === user.id)
+        req.user?.Followings.forEach(following => {
+          if (following.id === user.id) {
+            user.isFollowing = true
+            user.isSubscribing = following.Followship.subscription
+          }
+        })
         replies = replies.map(reply => ({
           ...reply.toJSON(),
           tweetUser: reply.toJSON().Tweet.User
@@ -151,7 +161,12 @@ const userConroller = {
       .then(([user, likes]) => {
         if (!user || isAdmin(user)) throw new Error('使用者不存在')
 
-        user.isFollowing = req.user?.Followings.some(following => following.id === user.id)
+        req.user?.Followings.forEach(following => {
+          if (following.id === user.id) {
+            user.isFollowing = true
+            user.isSubscribing = following.Followship.subscription
+          }
+        })
         const likedTweets = likes.map(like => ({
           ...like.Tweet.toJSON(),
           isLiked: req.user?.Likes.some(userLike => userLike.id === like.id)
@@ -310,6 +325,44 @@ const userConroller = {
         res.redirect('back')
       })
       .catch(next)
+  },
+  addSubscription: (req, res, next) => {
+    const followerId = helpers.getUser(req).id
+    const followingId = req.params.followingId
+    Followship.findOne({
+      where: {
+        followerId,
+        followingId
+      }
+    })
+      .then(followingUser => {
+        if (!followingUser) throw new Error('請先追隨這名使用者')
+        if (followingUser.subscription) throw new Error('你已經訂閱這名使用者')
+        return followingUser.update({
+          subscription: true
+        })
+      })
+      .then(() => res.redirect('back'))
+      .catch(err => next(err))
+  },
+  deleteSubscription: (req, res, next) => {
+    const followerId = helpers.getUser(req).id
+    const followingId = req.params.followingId
+    Followship.findOne({
+      where: {
+        followerId,
+        followingId,
+        subscription: true
+      }
+    })
+      .then(followingUser => {
+        if (!followingUser) throw new Error('你尚未訂閱或追隨這名使用者')
+        return followingUser.update({
+          subscription: false
+        })
+      })
+      .then(() => res.redirect('back'))
+      .catch(err => next(err))
   }
 }
 

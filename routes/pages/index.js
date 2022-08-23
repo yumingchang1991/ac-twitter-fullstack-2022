@@ -37,6 +37,9 @@ router.put('/setting', authenticated, userController.editSetting)
 router.post('/followships', authenticated, userController.addFollowship)
 router.delete('/followships/:followingId', authenticated, userController.deleteFollowship)
 
+router.post('/subscription/:followingId', authenticated, userController.addSubscription)
+router.delete('/subscription/:followingId', authenticated, userController.deleteSubscription)
+
 router.get('/chatroom', authenticated, chatController.publicChatRoom)
 router.get('/privateChat', authenticated, chatController.privateChatRoom)
 router.get('/privateChat/:chatterId', authenticated, chatController.privateChat)

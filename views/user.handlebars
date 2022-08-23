@@ -12,13 +12,25 @@
       {{else}}
         <div class="user-option" style="display: inline;">
           <a href="/privateChat/{{user.id}}">
-            <button class="text-decoration-none message">
-              <img src="/images/icon-orange-message.png">
+            <button class="text-decoration-none message" 
+              style="background-image: url(/images/icon-orange-message.png); 
+              background-repeat: no-repeat; background-position: center;">
             </button>
           </a>
-          <button class="text-decoration-none notification">
-            <img src="/images/icon-orange-notification.png">
-          </button>
+          {{#if user.isSubscribing}}
+            <form action="/subscription/{{user.id}}?_method=DELETE" method="POST" style="display: contents;">
+              <button type="submit" class="text-decoration-none notification" 
+                style="background-image: url(/images/icon-filledorange-notification.png); background-size: contain;">
+              </button>
+            </form>
+          {{else}}
+            <form action="/subscription/{{user.id}}" method="POST" style="display: contents;">
+              <button type="submit" class="text-decoration-none notification" 
+                style="background-image: url(/images/icon-orange-notification.png); 
+                background-repeat: no-repeat; background-position: center;">
+              </button>
+            </form>
+          {{/if}}
           {{#if user.isFollowing}}
             <form action="/followships/{{user.id}}?_method=DELETE" method="POST" style="display: contents;">
               <button type="submit" class="user-following">正在跟隨</button>

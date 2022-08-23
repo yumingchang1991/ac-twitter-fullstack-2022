@@ -10,7 +10,8 @@ module.exports = (sequelize, DataTypes) => {
   }
   Followship.init({
     followerId: DataTypes.INTEGER,
-    followingId: DataTypes.INTEGER
+    followingId: DataTypes.INTEGER,
+    subscription: DataTypes.BOOLEAN
   }, {
     sequelize,
     modelName: 'Followship',
