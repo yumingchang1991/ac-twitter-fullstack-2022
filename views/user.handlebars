@@ -10,21 +10,26 @@
         <button class="user-edit" id="edit-user" data-id="{{user.id}}"
           data-bs-toggle="modal" data-bs-target="#edit-user-modal">編輯個人資料</button>
       {{else}}
-        <div class="user-option" style="display: inline;">
-          <button class="text-decoration-none message">
-            <img src="/images/icon-orange-message.png">
-          </button>
-          <button class="text-decoration-none notification">
-            <img src="/images/icon-orange-notification.png">
-          </button>
+        <div class="user-option mt-2">
+          <form action="/users/chatroom/private" method="POST">
+            <input type="hidden" name="receiverId" value="{{user.id}}">
+            <button class="mx-1 btn btn-outline-light text-decoration-none message d-flex justify-content-center align-items-center">
+              <img src="/images/nav-icon-mobile-message-selected.png">
+            </button>
+          </form>
+          <form>
+            <button class="mx-1 btn btn-outline-light text-decoration-none notification d-flex justify-content-center align-items-center">
+              <img src="/images/icon-orange-notification.png">
+            </button>
+          </form>
           {{#if user.isFollowing}}
-            <form action="/followships/{{user.id}}?_method=DELETE" method="POST" style="display: contents;">
-              <button type="submit" class="user-following">正在跟隨</button>
+            <form action="/followships/{{user.id}}?_method=DELETE" method="POST" class="mx-1 d-flex justify-content-center align-items-center">
+              <button type="submit" class="user-following btn btn-outline-light">正在跟隨</button>
             </form>
           {{else}}
-            <form action="/followships" method="POST" style="display: contents;">
+            <form action="/followships" method="POST" class="mx-1 d-flex justify-content-center align-items-center">
               <input type="hidden" value="{{user.id}}" name="followingId">
-              <button type="submit" class="user-unfollowing">跟隨</button>
+              <button type="submit" class="user-unfollowing btn btn-outline-light">跟隨</button>
             </form>
           {{/if}}
         </div>

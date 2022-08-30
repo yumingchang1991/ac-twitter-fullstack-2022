@@ -1,0 +1,46 @@
+<div class="col-4 p-0 border-start border-end">
+  <div class="vh-100 d-flex flex-column">
+    <header class="mt-2 p-2 pb-4 d-flex flex-column justify-content-start"
+            style="border-bottom: 1px solid #E6ECF0; font-weight: bold; font-size: 24px;">
+      <span>訊息</span>
+    </header>
+    <div class="flex-grow-1 d-flex flex-column justify-content-start align-items-start" style="overflow-y: scroll;">
+      <ul id="private-message-users-list"
+        class="p-0 m-0 w-100 flex-grow-1 list-group d-flex flex-column justify-content-start align-items-start">
+        {{#if privateUsersList}}
+          {{#each privateUsersList}}
+          <li class="w-100 list-group-item list-group-item-action d-flex m-0 p-1 border rounded-0"
+          data-senderid="{{this.userId}}">
+            <img src="{{checkAvatar this.avatar}}" class='rounded-circle me-2' width="50" height="50">
+            <div class="flex-grow-1 d-flex flex-column">
+              <div class="d-flex">
+                <span class="sender-name" style="font-weight: bold; font-size: 14px;">{{this.name}}</span>
+                <span class="sender-account ms-1 text-start flex-grow-1" style="color: #657786; font-size: 14px">@{{this.account}}</span>
+                <span class="text-end" style="color: #657786; font-size: 14px; font-weight: bold">
+                  {{timeFormatForPrivateMessageUsersList this.latestMessage.createdAt}}
+                </span>
+              </div>
+              <div class="d-flex count-wrapper">
+                <span class="flex-grow-1" style="color: #657786; font-size: 14px">
+                  {{this.latestMessage.message}}
+                </span>
+                {{#if this.unreadPrivateMessages}}
+                <span class="count-unread-individual px-2 rounded-circle d-flex align-items-center" style="background-color: #FF7700; color: white; font-size: 11px;">
+                  {{this.unreadPrivateMessages}}
+                </span>
+                {{/if}}
+              </div>
+            </div>
+          </li>
+          {{/each}}
+        {{/if}}
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="col-6 p-0 border-end">
+  <div class="messages">
+    {{> messages}}
+  </div>
+  {{{body}}}
+</div>

@@ -1,0 +1,43 @@
+<div class="vh-100 d-flex flex-column">
+  <header class="mt-2 p-2 pb-4 d-flex flex-row justify-content-start align-items-center"
+          style="border-bottom: 1px solid #E6ECF0;"
+          >
+    <span id="receiver-name" class="me-2" style="font-weight: bold; font-size: 24px;">{{senderName}}</span>
+    <a id="sender-link" href="/users/{{senderId}}/tweets" data-senderid="{{senderId}}">
+      <span id="receiver-account" style="color: #6C757D; font-size: 16px">@{{senderAccount}}</span>
+    </a>
+  </header>
+  <div id="private-message-wrapper" class="flex-grow-1 d-flex flex-column" style="overflow-y: scroll;">
+    <ul id='private-message-list' class="flex-grow-1 list-group d-flex flex-column justify-content-end">
+      {{#each historyMessages}}
+        <li class="list-group-item border-0 my-1 d-flex flex-column">
+          <div class="d-flex">
+            {{#if (isTheSame this.sender ../loginUser.id)}}{{else}}
+            <img src="{{checkAvatar ../senderAvatar}}" class='rounded-circle me-2' width="40" height="40">{{/if}}
+            
+            <div class="flex-grow-1 d-flex flex-column">
+              <span class="p-2
+              {{#if (isTheSame this.sender ../loginUser.id)}}
+                align-self-end
+              {{else}}
+                bg-light align-self-start
+              {{/if}}" style="font-size: 15px; border-radius: 25px; background-color: RGBA(255, 102, 0, 0.5)">{{this.message}}</span>
+              <span class="{{#if (isTheSame this.sender ../loginUser.id)}}
+                text-end 
+              {{else}}
+                text-start
+              {{/if}}" style="font-size: 13px; color: #657786">{{this.createdAt}}</span>
+            </div>
+          </div>
+        </li>
+      {{/each}}
+    </ul>
+  </div>
+  <div class="d-flex align-items-center border-top">
+    <input class="mx-2 my-3 bg-light form-control private-message-input" type="text" placeholder="輸入訊息..." id="private-message-input"
+      name="privateMessageInput" style="border-radius: 50px;">
+    <div class="btn btn-link mx-2 send-button">
+      <img id="send-icon" src="/images/icon_send.png" width="24" height="24">
+    </div>
+  </div>
+</div>

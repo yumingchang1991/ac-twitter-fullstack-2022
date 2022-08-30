@@ -11,6 +11,7 @@ const userController = require('../../controllers/pages/user-controller')
 
 const { authenticated, authenticatedAdmin } = require('../../middleware/auth')
 const { generalErrorHandler } = require('../../middleware/error-handler')
+const notification = require('../../middleware/notification')
 
 // admin route
 router.get('/admin/signin', adminController.getSignin)
@@ -18,10 +19,10 @@ router.post('/admin/signin', passport.authenticate('local', { failureRedirect: '
 router.use('/admin', authenticatedAdmin, admin)
 
 // tweets route
-router.use('/tweets', authenticated, tweets)
+router.use('/tweets', authenticated, notification.countUnreadPrivateChat, tweets)
 
 // user route
-router.use('/users', authenticated, users)
+router.use('/users', authenticated, notification.countUnreadPrivateChat, users)
 
 // others
 router.get('/signup', userController.signUpPage)
@@ -30,7 +31,7 @@ router.get('/signin', userController.getSignin)
 router.post('/signin', passport.authenticate('local', { failureRedirect: '/signin', failureFlash: true }), userController.postSignin)
 router.get('/logout', userController.logout)
 
-router.get('/setting', authenticated, userController.getSetting)
+router.get('/setting', authenticated, notification.countUnreadPrivateChat, userController.getSetting)
 router.put('/setting', authenticated, userController.editSetting)
 
 router.post('/followships', authenticated, userController.addFollowship)

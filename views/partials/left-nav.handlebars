@@ -34,21 +34,34 @@
       </a>
     </div>
     <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
-      <a href="/tweets" class="flex-grow-1 d-flex justify-content-start">
+      <a href="/tweets" class="flex-grow-1 d-flex justify-content-start align-items-center">
         <img class="me-3" src="/images/nav-icon-mobile-home{{#ifCond path "/tweets"}}-selected{{/ifCond}}.png"
           width="24" height="24">
         <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/tweets"}}color: #FF6600;{{/ifCond}}">首頁</span>
       </a>
     </div>
     <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
-      <a href="/users/chatroom/public" class="flex-grow-1 d-flex justify-content-start">
-        <img class="me-3" src="/images/nav-icon-mobile-home{{#ifCond path "/users/chatroom"}}-selected{{/ifCond}}.png" width="24"
+      <a href="/users/chatroom/public" class="flex-grow-1 d-flex justify-content-start align-items-center">
+        <img class="me-3" src="/images/nav-icon-mobile-home{{#ifCond path "/users/chatroom/public"}}-selected{{/ifCond}}.png" width="24"
           height="24">
-        <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/users/chatroom"}}color: #FF6600;{{/ifCond}}">公開聊天室</span>
+        <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/users/chatroom/public"}}color: #FF6600;{{/ifCond}}">公開聊天室</span>
       </a>
     </div>
     <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
-      <a href="/users/{{loginUser.id}}/tweets" class="flex-grow-1 d-flex justify-content-start">
+      <a id="private-chat-link" href="/users/chatroom/private" class="flex-grow-1 d-flex justify-content-start align-items-center">
+        <img class="me-3" src="/images/nav-icon-mobile-message{{#ifCond path "/users/chatroom/private"}}-selected{{/ifCond}}.png"
+          width="24" height="24">
+        <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/users/chatroom/private"}}color:
+          #FF6600;{{/ifCond}}">私人訊息</span>
+        {{#if notification.countUnreadPrivateChat }}
+        <span id="count-unread-private-chat" class="mx-1 px-1 rounded-circle" style="font-size: 10px; background-color: #FF6600; color: white">
+          {{ notification.countUnreadPrivateChat }}
+        </span>
+        {{/if}}
+      </a>
+    </div>
+    <div class="ms-2 my-3 d-flex justify-content-center align-items-center align-items-center">
+      <a href="/users/{{loginUser.id}}/tweets" class="flex-grow-1 d-flex justify-content-start align-items-center">
         <img class="me-3" src="/images/nav-icon-mobile-profile{{#ifCond path "/users"}}-selected{{/ifCond}}.png"
           width="24" height="24">
         <span class="fw-bold" style="font-size: 18px;{{#ifCond path "/users"}}color: #FF6600;{{/ifCond}}">個人資料</span>

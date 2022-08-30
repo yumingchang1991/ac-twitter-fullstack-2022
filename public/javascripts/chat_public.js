@@ -1,4 +1,5 @@
 const socket = io()
+const messageWrapper = document.querySelector('#chat-message-wrapper')
 const connectedUsersList = document.querySelector('ul#connected-users-list')
 const chatMessageList = document.querySelector('ul#chat-message-list')
 const chatMessage = document.querySelector('input#chatMessage')
@@ -8,16 +9,20 @@ socket.on('connect', handleConnect)
 socket.on('user-join-chat', data => {
   chatMessageList.appendChild(createUserJoinMessage(data, true))
   chageUsersCount(data.usersCount)
-  renderUsersList(data.connectedUsers, true)
+  renderUsersList(data.connectedUsers)
 })
 socket.on('render-chat', data => {
   const messageElement = createChatMessageElement(socket, data)
   chatMessageList.appendChild(messageElement)
+  window.scrollTo({
+    top: messageWrapper.clientHeight,
+    behavior: 'smooth'
+  })
 })
 socket.on('user-leave-chat', data => {
   chatMessageList.appendChild(createUserJoinMessage(data, false))
   chageUsersCount(data.usersCount)
-  renderUsersList(data.connectedUsers, false)
+  renderUsersList(data.connectedUsers)
 })
 
 // sending message to server
@@ -26,15 +31,24 @@ sendButton.addEventListener('click', sendChatMessage)
 
 function handleConnect () {
   axios
-    .get('/apis/users/chatroom/public/initialization')
+    .get('/api/users/chatroom/public/initialization')
     .then(res => {
-      console.log(res.data)
+      const messages = res.data.messages.map(m => {
+        m.socketId = socket.id
+        return m
+      })
+
+      for (const message of messages) {
+        const messageElement = createChatMessageElement(socket, message)
+        chatMessageList.appendChild(messageElement)
+      }
     })
 }
 
 function sendChatMessage (e) {
   if (e.key === 'Enter' || e.type === 'click') {
     const messageToSend = chatMessage.value
+    if (!messageToSend || messageToSend.length === 0) return
     socket.emit('send-chat', messageToSend)
     chatMessage.value = ''
   }
@@ -58,7 +72,7 @@ function chageUsersCount (usersCount) {
   connectionCount.textContent = usersCount
 }
 
-function renderUsersList (latestUsers, isAdd = true) {
+function renderUsersList (latestUsers) {
   const latestUserIds = latestUsers.map(user => Number(user.userId))
   const renderedUserElements = document.querySelectorAll('ul#connected-users-list li')
   const renderedUserIds = []
@@ -143,9 +157,8 @@ function removeUserListItems (idToRemove, renderedListItems) {
 function createChatMessageElement (socket, data) {
   const isMe = socket.id === data.socketId
   const messageElement = document.createElement('li')
-  messageElement.classList.add('list-group-item', 'border-0', 'd-flex', 'justify-content-start','align-items-start')
+  messageElement.classList.add('list-group-item', 'border-0', 'd-flex', 'justify-content-start', 'align-items-start')
   messageElement.classList.add(isMe ? 'flex-row-reverse' : 'flex-row')
-  // messageElement.textContent = `${data.name}: ${data.message}`
 
   const avatar = document.createElement('img')
   avatar.src = data.avatar
@@ -164,7 +177,7 @@ function createChatMessageElement (socket, data) {
   message.style.borderRadius = '50px'
 
   const now = document.createElement('span')
-  now.textContent = new Date().toLocaleTimeString()
+  now.textContent = data.createdAt || new Date().toLocaleTimeString()
   now.classList.add('py-1', 'px-2', isMe ? 'text-end' : 'text-start')
   now.style.fontSize = '13px'
   now.style.color = '#657786'

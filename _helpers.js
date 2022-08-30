@@ -7,9 +7,14 @@ function getUser (req) {
 }
 
 function getPathToRender (req) {
-  if (req.path.startsWith('/users/chatroom')) return '/users/chatroom'
+  if (req.path.startsWith('/users/chatroom/public')) return '/users/chatroom/public'
+  if (req.path.startsWith('/users/chatroom/private')) return '/users/chatroom/private'
   if (req.path.startsWith('/users')) return '/users'
   return req.path
+}
+
+function getNotification (req) {
+  return req.notification
 }
 
 function socketioMiddleware (middleware) {
@@ -20,5 +25,6 @@ module.exports = {
   ensureAuthenticated,
   getUser,
   getPathToRender,
-  socketioMiddleware
+  socketioMiddleware,
+  getNotification
 }

@@ -15,7 +15,14 @@ module.exports = {
     return number
   },
   isRestPath: path => {
-    if (path === '/users/chatroom' || path === '/setting') return false
+    if (path.startsWith('/users/chatroom') || path === '/setting') return false
     return true
+  },
+  isTheSame: (a, b) => a === b,
+  timeFormatForPrivateMessageUsersList (time) {
+    if (dayjs().isSame(time, 'day')) {
+      return dayjs(time).fromNow()
+    }
+    return dayjs(time).format('MM/D')
   }
 }

@@ -20,6 +20,17 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'followerId',
         as: 'Followings'
       })
+
+      User.belongsToMany(User, {
+        through: models.PrivateMessage,
+        foreignKey: 'receiver',
+        as: 'ToSelf'
+      })
+      User.belongsToMany(User, {
+        through: models.PrivateMessage,
+        foreignKey: 'sender',
+        as: 'FromSelf'
+      })
     }
   }
 

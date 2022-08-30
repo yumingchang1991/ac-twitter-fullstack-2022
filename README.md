@@ -1,22 +1,28 @@
 ## Project Name
-[Alphitter](https://shielded-springs-90732.herokuapp.com/signin) deployed on Heroku
+Alphitter socket.io Challenge
 
 ## Description
-Alphacamp 的期末分組挑戰：「用全端開發模式，建立類似 twitter 的使用者論壇」
+This is an extended challenges from Alphitter to implement **socket.io**
 
-## Members
-- [Yu-Ming](https://www.linkedin.com/in/yumingchang1991/) as PM & Developer
-- [Joseph]() as QA & Developer
-- [Wanching]() as QA & Developer
+This version is not deployed to cloud services, but could be run locally.
+
+## Developer
+This branch is developed solely by [Yu-Ming](https://www.linkedin.com/in/yumingchang1991/)
 
 ## Core Technologies
-- `Express` for framework
-- `Passport` for authentication
-- `Multer` 、`imgur-node-api` for file upload
-- `MySQL` for database
-- `Heroku` for deployment
+- `socket.io` for real-time chat
+- the rest of tech stacks are the same as listed in [master branch](https://github.com/yumingchang1991/ac-twitter-fullstack-2022)
 
-## Steps to start this project from scratch
+## Some Highlights of What I did in this Challenge
+- Design **event-based socket.io application** to implement real-time chat between client-side and server-side
+- Use **direct SQL query** to get & format data from Database
+- Wrap **direct SQL query** into variable to avoid **SQL Injection Attack**
+- Use **async/await functions** to manage asychronous actions
+- Implement **middlewares** in both HTTP server & Socket.io server to get essential data
+- Abstract actions not directly related to Express Server to **service**, for example, qery data from database
+- Write **private-messages-seeder** to facilitate development
+
+## Steps to start this project locally
 
 ### 1) Clone a local copy of this repo
 ```bash

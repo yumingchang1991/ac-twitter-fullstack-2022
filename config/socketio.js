@@ -2,6 +2,9 @@ const { createServer } = require('http')
 const { Server } = require('socket.io')
 const passport = require('passport')
 const { socketioMiddleware } = require('../_helpers')
+const privateMessageServices = require('../services/privateMessage-service')
+const privateChatInitialization = require('../middleware/privateChat-initialization')
+const privateChatCookTargetUser = require('../middleware/privateChat-cookTargetUser')
 const chatHelpers = require('../helpers/chat-message-helpers')
 const TEXT = {
   MYSTERIOUS_USER: 'mysterious user'
@@ -16,7 +19,7 @@ module.exports = (app, PORT, expressSession) => {
     .use(socketioMiddleware(passport.initialize()))
     .use(socketioMiddleware(passport.session()))
 
-  io.on('connection', socket => {
+  io.on('connection', async socket => {
     addConnectedUsers(socket, connectedUsers)
 
     io.emit('user-join-chat', {
@@ -43,6 +46,88 @@ module.exports = (app, PORT, expressSession) => {
         leavingId: socket.request.user?.id,
         connectedUsers
       })
+    })
+  })
+
+  const notification = io.of('/notification')
+
+  notification
+    .use(socketioMiddleware(expressSession))
+    .use(socketioMiddleware(passport.initialize()))
+    .use(socketioMiddleware(passport.session()))
+
+  notification.on('connection', socket => {
+    const { id } = socket.request.user
+    socket.join(id)
+  })
+
+  const privateChat = io.of('/private-chatroom')
+
+  privateChat
+    .use(socketioMiddleware(expressSession))
+    .use(socketioMiddleware(passport.initialize()))
+    .use(socketioMiddleware(passport.session()))
+    .use(socketioMiddleware(privateChatInitialization))
+    .use(socketioMiddleware(privateChatCookTargetUser))
+
+  privateChat.on('connection', socket => {
+    let room = ''
+    if (socket.request.privateChatInitialization.status === 'no-chat-history') {
+      privateChat.emit('no-chat-history', {})
+      socket.on('no-chat-history-frontend', data => {
+        socket.request.privateChatInitialization.privateUsersList = [
+          {
+            userId: Number(data.receiver)
+          }
+        ]
+        room = chatHelpers.generateRoomName(
+          Number(data.receiver),
+          Number(socket.request.user.id)
+        )
+        socket.join(room)
+      })
+    } else {
+      room = chatHelpers.generateRoomName(
+        Number(socket.request.privateChatInitialization.privateUsersList[0].userId),
+        Number(socket.request.user.id)
+      )
+      socket.join(room)
+    }
+
+    socket.on('send-chat', async data => {
+      const receiverId = Number(data.receiver)
+      const senderId = Number(socket.request.user.id)
+
+      const newMessage = await privateMessageServices.addMessage(
+        receiverId,
+        senderId,
+        data.message
+      )
+
+      privateChat.to(room).emit('render-chat', {
+        ...newMessage,
+        sender: senderId,
+        avatar: socket.request.user.avatar
+      })
+
+      notification.to(receiverId).emit('new-private-messages', { senderId })
+    })
+
+    socket.on('read-private-messages', async data => {
+      const { senderId } = data
+      const receiverId = socket.request.user.id
+      const countUnreadPrivateMessages = await privateMessageServices.setMessagesRead(senderId, receiverId)
+      notification
+        .to(receiverId)
+        .to(senderId)
+        .emit('private-messages-read', {
+          countUnreadPrivateMessages,
+          senderId
+        })
+    })
+
+    socket.on('disconnecting', () => {
+      socket.leave('roomname')
     })
   })
 
