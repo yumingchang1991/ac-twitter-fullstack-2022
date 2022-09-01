@@ -13,14 +13,16 @@ This branch is developed solely by [Yu-Ming](https://www.linkedin.com/in/yumingc
 - `socket.io` for real-time chat
 - the rest of tech stacks are the same as listed in [master branch](https://github.com/yumingchang1991/ac-twitter-fullstack-2022)
 
-## Some Highlights of What I did in this Challenge
-- Design **event-based socket.io application** to implement real-time chat between client-side and server-side
-- Use **direct SQL query** to get & format data from Database
-- Wrap **direct SQL query** into variable to avoid **SQL Injection Attack**
-- Use **async/await functions** to manage asychronous actions
-- Implement **middlewares** in both HTTP server & Socket.io server to get essential data
-- Abstract actions not directly related to Express Server to **service**, for example, qery data from database
-- Write **private-messages-seeder** to facilitate development
+## What I Developed
+| Features | Description |
+| --- | --- |
+| Real-time Chat | Implement **event-based `socket.io` application** between client-side and server-side |
+| Direct SQL | Use **direct SQL query** to get & format data from MySQL |
+| Security | Wrap **direct SQL query** into variable to avoid **SQL Injection Attack** |
+| Readibility | Use **async/await functions** to manage asychronous actions |
+| Middlewares | Implement **middlewares** in both HTTP server & Socket.io server to get essential data |
+| Service Worker | Abstract actions not directly related to Express Server to **service**, for example, qery data from database |
+| Seeder | Write **private-messages-seeder** to facilitate development |
 
 ## Steps to start this project locally
 
