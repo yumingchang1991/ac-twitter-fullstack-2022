@@ -15,8 +15,11 @@ module.exports = async (req, res, next) => {
   // if chatroom NOT exists
   if (privateMessages.length === 0) {
     // if no message, it won't exist in privateUsersList so query this user and push it to the top of privateUsersList
-    const queryString = 'SELECT Users.`id` as `userId`, Users.`name`, Users.`account`, Users.`avatar` FROM Users WHERE Users.`id` = ' + receiverId + ';'
-    const targetUser = await sequelize.query(queryString, { type: QueryTypes.SELECT })
+    const queryString = 'SELECT Users.`id` as `userId`, Users.`name`, Users.`account`, Users.`avatar` FROM Users WHERE Users.`id` = :receiverId;'
+    const targetUser = await sequelize.query(queryString, {
+      type: QueryTypes.SELECT,
+      replacements: { receiverId }
+    })
     targetUser[0].latestMessage = {
       message: null,
       sender: senderId
