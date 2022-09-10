@@ -18,7 +18,7 @@ This branch is developed solely by [Yu-Ming](https://www.linkedin.com/in/yumingc
 | --- | --- |
 | Real-time Chat | Implement **event-based `socket.io` application** between client-side and server-side |
 | Direct SQL | Use **direct SQL query** to get & format data from MySQL |
-| Security | Wrap **direct SQL query** into variable to avoid **SQL Injection Attack** |
+| Security | Wrap **direct SQL query** to avoid **SQL Injection Attack** |
 | Readibility | Use **async/await functions** to manage asychronous actions |
 | Middlewares | Implement **middlewares** in both HTTP server & Socket.io server to get essential data |
 | Service Worker | Abstract actions not directly related to Express Server to **service**, for example, qery data from database |
