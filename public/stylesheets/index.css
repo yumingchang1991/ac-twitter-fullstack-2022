@@ -604,3 +604,16 @@ a:hover {
 #newest-msg-time {
   font-size: 12px;
 }
+
+#private-noti {
+  height: 18px;
+  width: 18px;
+
+  color: var(--white);
+  font-size: xx-small;
+  text-align: center;
+
+  position: absolute;
+  left: 8%;
+  top: -12%;
+}

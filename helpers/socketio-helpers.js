@@ -65,11 +65,13 @@ const databaseHelpers = {
     })
   },
   checkRead: userId => {
-    return Message.findOne({
+    return Message.findAll({
+      attributes: [[sequelize.fn('COUNT', sequelize.col('id')), 'notReadCounts']],
       where: {
         receiverId: userId,
         isread: false
-      }
+      },
+      raw: true
     })
   },
   updateRead: (selfId, otherId) => {

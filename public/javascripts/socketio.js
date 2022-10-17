@@ -12,8 +12,13 @@ mainSocket.on('connect', () => {
   })
 })
 
-mainSocket.on('notify:private', () => {
+mainSocket.on('notify:private', notReadCounts => {
   const noti = document.querySelector('#private-noti')
+  if (notReadCounts) {
+    noti.textContent = notReadCounts
+  } else {
+    noti.textContent = Number(noti.textContent) + 1
+  }
   noti.style.display = 'block'
 })
 mainSocket.on('notify:noneprivate', () => {

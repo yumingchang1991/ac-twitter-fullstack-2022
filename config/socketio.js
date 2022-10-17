@@ -64,10 +64,10 @@ module.exports = io => {
     socket.join(userId)
 
     socket.on('message:checkRead', async () => {
-      const message = await databaseHelpers.checkRead(userId)
+      const notReadMessage = await databaseHelpers.checkRead(userId)
 
-      if (message) {
-        socket.emit('notify:private')
+      if (notReadMessage[0].notReadCounts > 0) {
+        socket.emit('notify:private', notReadMessage[0].notReadCounts)
       } else {
         socket.emit('notify:noneprivate')
       }
@@ -207,9 +207,10 @@ module.exports = io => {
     socket.on('message:read', async data => {
       const { selfId, otherId } = JSON.parse(data)
       await databaseHelpers.updateRead(selfId, otherId)
-      const message = await databaseHelpers.checkRead(selfId)
-      if (message) {
-        mainSocket.to(selfId).emit('notify:private')
+      const notReadMessage = await databaseHelpers.checkRead(selfId)
+
+      if (notReadMessage[0].notReadCounts > 0) {
+        mainSocket.to(selfId).emit('notify:private', notReadMessage[0].notReadCounts)
       } else {
         mainSocket.to(selfId).emit('notify:noneprivate')
       }
