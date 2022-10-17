@@ -1,5 +1,6 @@
-const { Tweet, User, Reply, Like } = require('../../models')
+const { Tweet, User, Reply, Like, TweetNotification } = require('../../models')
 const helpers = require('../../_helpers')
+const { getSubscribingUsers } = require('../../helpers/user-helpers')
 const dayjs = require('dayjs')
 
 const tweetController = {
@@ -19,26 +20,38 @@ const tweetController = {
       })
       .catch(err => next(err))
   },
-  addTweet: (req, res, next) => {
-    const UserId = helpers.getUser(req).id
-    const { description } = req.body
-    if (!description.trim()) {
-      req.flash('error_messages', '推文不可空白')
-      return res.redirect('/tweets')
-    }
-    if (description.length > 140) {
-      req.flash('error_messages', '推文不可超過140字')
-      return res.redirect('/tweets')
-    }
-    return Tweet.create({
-      UserId,
-      description
-    })
-      .then(() => {
-        req.flash('success_messages', '成功發布推文')
-        res.redirect('/tweets')
+  addTweet: async (req, res, next) => {
+    try {
+      const UserId = helpers.getUser(req).id
+      const { description } = req.body
+      if (!description.trim()) {
+        req.flash('error_messages', '推文不可空白')
+        return res.redirect('/tweets')
+      }
+      if (description.length > 140) {
+        req.flash('error_messages', '推文不可超過140字')
+        return res.redirect('/tweets')
+      }
+
+      const newTweet = await Tweet.create({
+        UserId,
+        description
       })
-      .catch(err => next(err))
+
+      const subscribingUsers = await getSubscribingUsers(UserId)
+
+      subscribingUsers.forEach(id => {
+        TweetNotification.create({
+          UserId: id,
+          TweetId: newTweet.id
+        })
+      })
+
+      req.flash('success_messages', '成功發布推文')
+      res.redirect('/tweets')
+    } catch (err) {
+      next(err)
+    }
   },
   addLike: (req, res, next) => {
     const UserId = helpers.getUser(req).id

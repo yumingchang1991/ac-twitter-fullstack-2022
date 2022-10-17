@@ -7,17 +7,14 @@ const path = require('path')
 const { engine } = require('express-handlebars')
 const flash = require('connect-flash')
 const methodOverride = require('method-override')
-const session = require('express-session')
 const http = require('http')
 const { Server } = require('socket.io')
 
 const passport = require('./config/passport')
 const socketioConfig = require('./config/socketio')
 const handlebarsHelpers = require('./helpers/handlebars-helpers')
+const sessionMiddleware = require('./middleware/session')
 const { pages, apis } = require('./routes')
-
-const SESSION_SECRET = process.env.SESSION_SECRET || 'twitterSECRET'
-const sessionMiddleware = session({ secret: SESSION_SECRET, resave: false, saveUninitialized: false })
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -52,17 +49,6 @@ app.use((req, res, next) => {
   next()
 })
 
-const wrap = middleware => (socket, next) => middleware(socket.request, {}, next)
-io.of('/').use(wrap(sessionMiddleware))
-io.of('/').use(wrap(passport.initialize()))
-io.of('/').use(wrap(passport.session()))
-io.of('/').use((socket, next) => {
-  if (socket.request.user) {
-    next()
-  } else {
-    next(new Error('unauthorized'))
-  }
-})
 socketioConfig(io)
 
 app.use('/api', apis)

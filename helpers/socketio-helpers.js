@@ -1,6 +1,6 @@
 const dayjs = require('dayjs')
 const { Op, QueryTypes } = require('sequelize')
-const { User, Message, sequelize } = require('../models')
+const { User, Message, Tweet, TweetNotification, sequelize } = require('../models')
 
 // public chatroom
 const publicChatroomUsers = []
@@ -129,6 +129,37 @@ const databaseHelpers = {
       })
 
     return chatUsers
+  },
+  getnotification: async selfId => {
+    return await TweetNotification.findAll({
+      include: [
+        { model: Tweet, include: [User] }
+      ],
+      where: {
+        UserId: selfId
+      },
+      order: [['id', 'desc']],
+      raw: true,
+      nest: true
+    })
+  },
+  checkNotification: async UserId => {
+    const newNotification = await TweetNotification.findOne({
+      where: {
+        UserId,
+        isRead: false
+      },
+      raw: true,
+      nest: true
+    })
+
+    return !!newNotification
+  },
+  readNotification: UserId => {
+    TweetNotification.update(
+      { isRead: true },
+      { where: { UserId } }
+    )
   }
 }
 

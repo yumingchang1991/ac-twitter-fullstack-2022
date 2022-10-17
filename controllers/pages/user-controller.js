@@ -363,6 +363,9 @@ const userConroller = {
       })
       .then(() => res.redirect('back'))
       .catch(err => next(err))
+  },
+  getNotification: (req, res, next) => {
+    res.render('notification')
   }
 }
 

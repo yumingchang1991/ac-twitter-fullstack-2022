@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       })
       User.hasMany(models.Message, { foreignKey: 'senderId', as: 'sendedMessages' })
       User.hasMany(models.Message, { foreignKey: 'receiverId', as: 'receivedMessages' })
+      User.hasMany(models.TweetNotification, { foreignKey: 'UserId' })
     }
   }
 

@@ -2,7 +2,16 @@ const mainSocket = io('/')
 
 mainSocket.on('connect', () => {
   mainSocket.emit('message:checkRead')
+  mainSocket.emit('notify:checkRead')
+
+  const forms = document.querySelectorAll('form')
+  forms?.forEach(form => {
+    form.addEventListener('submit', e => {
+      mainSocket.emit(`submit:${e.target.id}`)
+    })
+  })
 })
+
 mainSocket.on('notify:private', () => {
   const noti = document.querySelector('#private-noti')
   noti.style.display = 'block'
@@ -10,6 +19,11 @@ mainSocket.on('notify:private', () => {
 mainSocket.on('notify:noneprivate', () => {
   const noti = document.querySelector('#private-noti')
   noti.style.display = 'none'
+})
+
+mainSocket.on('notify:noti', () => {
+  const noti = document.querySelector('#notification-noti')
+  noti.style.display = 'block'
 })
 
 if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/privateChat') {
@@ -163,5 +177,31 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
       socket.emit('chat message', chatInput.value)
       chatInput.value = ''
     }
+  })
+} else if (location.pathname === '/notification') {
+  const socket = io('/notification')
+  const notiList = document.querySelector('#notification-list')
+  socket.on('noti', data => {
+    const noti = document.querySelector('#notification-noti')
+    noti.style.display = 'none'
+
+    const notifications = JSON.parse(data)
+    let list = ''
+    notifications.forEach(notification => {
+      // 已讀的顯示白底，未讀顯示顏色
+      const backgroundColor = notification.isRead === 0 ? '#FFF7F0' : 'white'
+
+      list += `
+        <a href="/tweets/${notification.Tweet.id}/replies">
+          <div class="border-bottom p-3" style="background-color: ${backgroundColor};">
+            <img src="${notification.Tweet.User.avatar}" class="user-avatar mb-2" style="height: 50px; width: 50px; border: none;">
+            <p class="font-bold">${notification.Tweet.User.name}有新的推文</p>
+            <p style="color: var(--secondary);">${notification.Tweet.description}</p>
+          </div>
+        </a>
+      `
+    })
+
+    notiList.innerHTML = list
   })
 }

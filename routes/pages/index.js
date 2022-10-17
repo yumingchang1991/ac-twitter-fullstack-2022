@@ -40,6 +40,7 @@ router.delete('/followships/:followingId', authenticated, userController.deleteF
 router.post('/subscription/:followingId', authenticated, userController.addSubscription)
 router.delete('/subscription/:followingId', authenticated, userController.deleteSubscription)
 
+router.get('/notification', authenticated, userController.getNotification)
 router.get('/chatroom', authenticated, chatController.publicChatRoom)
 router.get('/privateChat', authenticated, chatController.privateChatRoom)
 router.get('/privateChat/:chatterId', authenticated, chatController.privateChat)

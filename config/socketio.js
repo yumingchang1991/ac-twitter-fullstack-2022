@@ -1,11 +1,65 @@
 const dayjs = require('dayjs')
 const { Op } = require('sequelize')
+const passport = require('passport')
 const { addUser, getUsers, removeUser, group, addSocketIdInData, historyMessageFormat, databaseHelpers } = require('../helpers/socketio-helpers')
+const { getSubscribingUsers } = require('../helpers/user-helpers')
 const { Message, User } = require('../models')
+const sessionMiddleware = require('../middleware/session')
 
 module.exports = io => {
+  // middleware
+  const wrap = middleware => (socket, next) => middleware(socket.request, {}, next)
+
+  // Namespaces
+  const mainSocket = io.of('/')
+  const notiSocket = io.of('/notification')
+  const publicSocket = io.of('/chatroom')
+  const privateSocket = io.of('/privateChat')
+
+  // use passport
+  mainSocket.use(wrap(sessionMiddleware))
+  mainSocket.use(wrap(passport.initialize()))
+  mainSocket.use(wrap(passport.session()))
+  mainSocket.use((socket, next) => {
+    if (socket.request.user) {
+      next()
+    } else {
+      next(new Error('unauthorized'))
+    }
+  })
+  notiSocket.use(wrap(sessionMiddleware))
+  notiSocket.use(wrap(passport.initialize()))
+  notiSocket.use(wrap(passport.session()))
+  notiSocket.use((socket, next) => {
+    if (socket.request.user) {
+      next()
+    } else {
+      next(new Error('unauthorized'))
+    }
+  })
+  publicSocket.use(wrap(sessionMiddleware))
+  publicSocket.use(wrap(passport.initialize()))
+  publicSocket.use(wrap(passport.session()))
+  publicSocket.use((socket, next) => {
+    if (socket.request.user) {
+      next()
+    } else {
+      next(new Error('unauthorized'))
+    }
+  })
+  privateSocket.use(wrap(sessionMiddleware))
+  privateSocket.use(wrap(passport.initialize()))
+  privateSocket.use(wrap(passport.session()))
+  privateSocket.use((socket, next) => {
+    if (socket.request.user) {
+      next()
+    } else {
+      next(new Error('unauthorized'))
+    }
+  })
+
   // notification
-  io.of('/').on('connection', socket => {
+  mainSocket.on('connection', socket => {
     const userId = String(socket.request.user.id)
     socket.join(userId)
 
@@ -19,13 +73,37 @@ module.exports = io => {
       }
     })
 
+    socket.on('notify:checkRead', async () => {
+      if (await databaseHelpers.checkNotification(socket.request.user.id)) {
+        socket.emit('notify:noti')
+      }
+    })
+
+    socket.on('submit:add-tweet', async () => {
+      // 找出有訂閱的追隨者 id 列表
+      const subscribingUserIds = await getSubscribingUsers(socket.request.user.id)
+
+      // 發送即時通知
+      subscribingUserIds.forEach(id => {
+        mainSocket.to(String(id)).emit('notify:noti')
+      })
+    })
+
     socket.on('disconnect', () => {
       socket.leave(userId)
     })
   })
 
+  notiSocket.on('connection', async socket => {
+    const notifications = await databaseHelpers.getnotification(socket.request.user.id)
+    socket.emit('noti', JSON.stringify(notifications))
+
+    // 更新為已讀
+    databaseHelpers.readNotification(socket.request.user.id)
+  })
+
   // public chatroom
-  io.of('/chatroom').on('connection', socket => {
+  publicSocket.on('connection', socket => {
     console.log('a user is connected')
 
     socket.on('user:connected', async selfId => {
@@ -49,7 +127,7 @@ module.exports = io => {
 
       socket.emit('history:public', JSON.stringify(group(messages, 'createdAt')))
 
-      io.of('/chatroom').emit('user:updateList', JSON.stringify(getUsers()))
+      publicSocket.emit('user:updateList', JSON.stringify(getUsers()))
       socket.broadcast.emit('broadcast', `${user.name}上線`)
     })
 
@@ -61,20 +139,20 @@ module.exports = io => {
         senderId: socket.userdata.id
       })
 
-      io.of('/chatroom').emit('chat message', JSON.stringify({ ...socket.userdata, msg, time }))
+      publicSocket.emit('chat message', JSON.stringify({ ...socket.userdata, msg, time }))
     })
 
     socket.on('disconnect', () => {
       console.log('a user disconnect')
       const user = removeUser(socket.id)
 
-      io.of('/chatroom').emit('user:updateList', JSON.stringify(getUsers()))
+      publicSocket.emit('user:updateList', JSON.stringify(getUsers()))
       socket.broadcast.emit('broadcast', `${user.name}離線`)
     })
   })
 
   // private chat
-  io.of('/privateChat').on('connect', socket => {
+  privateSocket.on('connect', socket => {
     socket.on('user:connected', async selfId => {
       const selfUser = await databaseHelpers.getUser(selfId)
       const privateChatList = await databaseHelpers.getprivateChatUserList(selfId)
@@ -131,9 +209,9 @@ module.exports = io => {
       await databaseHelpers.updateRead(selfId, otherId)
       const message = await databaseHelpers.checkRead(selfId)
       if (message) {
-        io.of('/').to(selfId).emit('notify:private')
+        mainSocket.to(selfId).emit('notify:private')
       } else {
-        io.of('/').to(selfId).emit('notify:noneprivate')
+        mainSocket.to(selfId).emit('notify:noneprivate')
       }
     })
 
@@ -146,9 +224,9 @@ module.exports = io => {
         receiverId: socket.receiverId
       })
 
-      io.of('/privateChat').to(socket.room)
+      privateSocket.to(socket.room)
         .emit('chat message', JSON.stringify({ ...socket.userdata, msg, time, socketId: socket.id }))
-      io.of('/').to(socket.receiverId).emit('notify:private')
+      mainSocket.to(socket.receiverId).emit('notify:private')
     })
 
     socket.on('disconnected', () => {

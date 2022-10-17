@@ -1,4 +1,4 @@
-const { User, Tweet, sequelize } = require('../models')
+const { User, Tweet, Followship, sequelize } = require('../models')
 
 const isAdmin = user => user.role === 'admin'
 
@@ -25,7 +25,21 @@ const userInfoHelper = UserId => {
   })
 }
 
+const getSubscribingUsers = async userId => {
+  return [...(await Followship.findAll({
+    attributes: ['followerId'],
+    where: {
+      followingId: userId,
+      subscription: true
+    },
+    raw: true,
+    nest: true
+  }))]
+    .map(user => user.followerId)
+}
+
 module.exports = {
   isAdmin,
-  userInfoHelper
+  userInfoHelper,
+  getSubscribingUsers
 }

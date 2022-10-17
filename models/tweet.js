@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'TweetId',
         onDelete: 'CASCADE'
       })
+      Tweet.hasMany(models.TweetNotification, {
+        foreignKey: 'TweetId',
+        onDelete: 'CASCADE'
+      })
     }
   }
   Tweet.init({
