@@ -63,6 +63,7 @@ module.exports = io => {
     const userId = String(socket.request.user.id)
     socket.join(userId)
 
+    // 檢查有無未讀私人訊息
     socket.on('message:checkRead', async () => {
       const notReadMessage = await databaseHelpers.checkRead(userId)
 
@@ -73,12 +74,14 @@ module.exports = io => {
       }
     })
 
+    // 檢查有無未讀通知
     socket.on('notify:checkRead', async () => {
       if (await databaseHelpers.checkNotification(socket.request.user.id)) {
         socket.emit('notify:noti')
       }
     })
 
+    // 新增貼文時會發送通知給訂閱者
     socket.on('submit:add-tweet', async () => {
       // 找出有訂閱的追隨者 id 列表
       const subscribingUserIds = await getSubscribingUsers(socket.request.user.id)
@@ -104,14 +107,14 @@ module.exports = io => {
 
   // public chatroom
   publicSocket.on('connection', socket => {
-    console.log('a user is connected')
-
+    // 使用者進入聊天室
     socket.on('user:connected', async selfId => {
       const user = await databaseHelpers.getUser(selfId)
 
       user.socketId = socket.id
       socket.userdata = addUser(user)
 
+      // 取得歷史訊息
       let messages = await Message.findAll({
         include: [{ model: User, as: 'sender' }],
         where: { receiverId: null },
@@ -127,10 +130,12 @@ module.exports = io => {
 
       socket.emit('history:public', JSON.stringify(group(messages, 'createdAt')))
 
+      // 更新線上使用者
       publicSocket.emit('user:updateList', JSON.stringify(getUsers()))
       socket.broadcast.emit('broadcast', `${user.name}上線`)
     })
 
+    // 發送訊息
     socket.on('chat message', msg => {
       const time = dayjs(new Date()).format('a HH:mm')
 
@@ -153,6 +158,7 @@ module.exports = io => {
 
   // private chat
   privateSocket.on('connect', socket => {
+    // 使用者開啟私人訊息頁
     socket.on('user:connected', async selfId => {
       const selfUser = await databaseHelpers.getUser(selfId)
       const privateChatList = await databaseHelpers.getprivateChatUserList(selfId)
@@ -162,6 +168,7 @@ module.exports = io => {
       socket.emit('user:updateList', JSON.stringify(privateChatList))
     })
 
+    // 使用者與另一使用者私人對話窗
     socket.on('user:connected with other', async data => {
       const { selfId, otherId } = JSON.parse(data)
       socket.userdata = await databaseHelpers.getUser(selfId)
@@ -204,6 +211,7 @@ module.exports = io => {
       socket.emit('history:private', JSON.stringify({ otherUser, messages }))
     })
 
+    // 已讀私人訊息
     socket.on('message:read', async data => {
       const { selfId, otherId } = JSON.parse(data)
       await databaseHelpers.updateRead(selfId, otherId)
@@ -216,6 +224,7 @@ module.exports = io => {
       }
     })
 
+    // 傳送私人訊息
     socket.on('chat message', msg => {
       const time = dayjs(new Date()).format('a HH:mm')
 

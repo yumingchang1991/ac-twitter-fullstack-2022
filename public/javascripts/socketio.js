@@ -1,9 +1,11 @@
 const mainSocket = io('/')
 
 mainSocket.on('connect', () => {
+  // 檢查未讀私人訊息及通知
   mainSocket.emit('message:checkRead')
   mainSocket.emit('notify:checkRead')
 
+  // 監聽新增推文事件
   const forms = document.querySelectorAll('form')
   forms?.forEach(form => {
     form.addEventListener('submit', e => {
@@ -12,6 +14,7 @@ mainSocket.on('connect', () => {
   })
 })
 
+// 有未讀私人訊息
 mainSocket.on('notify:private', notReadCounts => {
   const noti = document.querySelector('#private-noti')
   if (notReadCounts) {
@@ -21,16 +24,20 @@ mainSocket.on('notify:private', notReadCounts => {
   }
   noti.style.display = 'block'
 })
+
+// 無未讀私人訊息
 mainSocket.on('notify:noneprivate', () => {
   const noti = document.querySelector('#private-noti')
   noti.style.display = 'none'
 })
 
+// 有未讀通知
 mainSocket.on('notify:noti', () => {
   const noti = document.querySelector('#notification-noti')
   noti.style.display = 'block'
 })
 
+// 公開/私人聊天室 socket
 if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/privateChat') {
   let socket = null
   if (location.pathname === '/chatroom') {
@@ -51,7 +58,8 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
   function renderMessage (avatar, msg, selfMsg = false, time) {
     const item = document.createElement('div')
     item.className = 'd-flex mb-2'
-    if (selfMsg) {
+
+    if (selfMsg) { // 若為自己傳送的訊息
       item.innerHTML = `
         <div class="msg-self" style="max-width: 80%;">
           <p class="chat-msg">${msg}</p>
@@ -71,7 +79,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
   }
 
   socket.on('connect', () => {
-    if (otherId) {
+    if (otherId) { // 與另一使用者私人聊天
       socket.emit('user:connected with other', JSON.stringify({ selfId, otherId }))
       socket.emit('message:read', JSON.stringify({ selfId, otherId }))
       chatForm.style.display = 'block'
@@ -81,6 +89,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     }
   })
 
+  // 更新使用者名單
   socket.on('user:updateList', users => {
     let item = ''
     JSON.parse(users).forEach(user => {
@@ -108,6 +117,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     onlineUsers.innerHTML = item
   })
 
+  // 私人歷史訊息
   socket.on('history:private', data => {
     const { otherUser, messages } = JSON.parse(data)
     const header = document.querySelectorAll('.chat-header')[1]
@@ -130,6 +140,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     chatMessagesContainer.scrollTo(0, chatMessages.scrollHeight)
   })
 
+  // 公開聊天室歷史訊息
   socket.on('history:public', data => {
     JSON.parse(data).forEach(value => {
       const date = document.createElement('div')
@@ -149,6 +160,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     chatMessagesContainer.scrollTo(0, chatMessages.scrollHeight)
   })
 
+  // 廣播訊息
   socket.on('broadcast', msg => {
     const item = document.createElement('div')
     item.className = 'broadcast'
@@ -157,6 +169,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     chatMessages.scrollTo(0, chatMessages.scrollHeight)
   })
 
+  // 有新訊息時
   socket.on('chat message', data => {
     const { avatar, msg, time, socketId } = JSON.parse(data)
 
@@ -176,6 +189,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     }
   })
 
+  // 監聽訊息輸入框
   chatForm?.addEventListener('submit', event => {
     event.preventDefault()
     if (chatInput.value) {
@@ -183,9 +197,11 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
       chatInput.value = ''
     }
   })
-} else if (location.pathname === '/notification') {
+} else if (location.pathname === '/notification') { // 通知頁
   const socket = io('/notification')
   const notiList = document.querySelector('#notification-list')
+
+  // 顯示通知
   socket.on('noti', data => {
     const noti = document.querySelector('#notification-noti')
     noti.style.display = 'none'
