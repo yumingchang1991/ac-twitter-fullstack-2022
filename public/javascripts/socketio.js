@@ -201,8 +201,19 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
   const socket = io('/notification')
   const notiList = document.querySelector('#notification-list')
 
+  socket.on('connect', () => {
+    socket.emit('notify:getNotification')
+  })
+
+  socket.on('notify:noti', () => {
+    // 等待通知存入資料庫
+    setTimeout(() => {
+      socket.emit('notify:getNotification')
+    }, 5000)
+  })
+
   // 顯示通知
-  socket.on('noti', data => {
+  socket.on('notify:notifications', data => {
     const noti = document.querySelector('#notification-noti')
     noti.style.display = 'none'
 

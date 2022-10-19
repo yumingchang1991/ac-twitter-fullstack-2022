@@ -88,7 +88,8 @@ module.exports = io => {
 
       // 發送即時通知
       subscribingUserIds.forEach(id => {
-        mainSocket.to(String(id)).emit('notify:noti')
+        mainSocket.to(String(id)).emit('notify:noti') // 側邊欄點點
+        notiSocket.to(id).emit('notify:noti') // 通知頁
       })
     })
 
@@ -98,11 +99,22 @@ module.exports = io => {
   })
 
   notiSocket.on('connection', async socket => {
-    const notifications = await databaseHelpers.getnotification(socket.request.user.id)
-    socket.emit('noti', JSON.stringify(notifications))
+    const userId = socket.request.user.id
 
-    // 更新為已讀
-    databaseHelpers.readNotification(socket.request.user.id)
+    socket.join(userId)
+
+    // 取得所有通知
+    socket.on('notify:getNotification', async () => {
+      const notifications = await databaseHelpers.getnotification(userId)
+      socket.emit('notify:notifications', JSON.stringify(notifications))
+
+      // 更新為已讀
+      databaseHelpers.readNotification(userId)
+    })
+
+    socket.on('disconnect', () => {
+      socket.leave(userId)
+    })
   })
 
   // public chatroom
