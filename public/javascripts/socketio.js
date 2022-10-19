@@ -47,7 +47,6 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
   }
   const otherId = location.pathname.slice(13)
 
-  const selfId = document.querySelector('#self-id').textContent
   const chatForm = document.querySelector('#chat-form')
   const chatInput = document.querySelector('#chat-input')
   const onlineUsers = document.querySelector('#online-users')
@@ -80,12 +79,12 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
 
   socket.on('connect', () => {
     if (otherId) { // 與另一使用者私人聊天
-      socket.emit('user:connected with other', JSON.stringify({ selfId, otherId }))
-      socket.emit('message:read', JSON.stringify({ selfId, otherId }))
+      socket.emit('user:connected with other', otherId)
+      socket.emit('message:read', otherId)
       chatForm.style.display = 'block'
       chatMessages.innerHTML = ''
     } else {
-      socket.emit('user:connected', selfId)
+      socket.emit('user:connected')
     }
   })
 

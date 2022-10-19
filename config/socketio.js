@@ -120,8 +120,9 @@ module.exports = io => {
   // public chatroom
   publicSocket.on('connection', socket => {
     // 使用者進入聊天室
-    socket.on('user:connected', async selfId => {
-      const user = await databaseHelpers.getUser(selfId)
+    socket.on('user:connected', async () => {
+      const userId = socket.request.user.id
+      const user = await databaseHelpers.getUser(userId)
 
       user.socketId = socket.id
       socket.userdata = addUser(user)
@@ -170,10 +171,12 @@ module.exports = io => {
 
   // private chat
   privateSocket.on('connect', socket => {
+    const userId = socket.request.user.id
+
     // 使用者開啟私人訊息頁
-    socket.on('user:connected', async selfId => {
-      const selfUser = await databaseHelpers.getUser(selfId)
-      const privateChatList = await databaseHelpers.getprivateChatUserList(selfId)
+    socket.on('user:connected', async () => {
+      const selfUser = await databaseHelpers.getUser(userId)
+      const privateChatList = await databaseHelpers.getprivateChatUserList(userId)
 
       socket.userdata = selfUser
 
@@ -181,11 +184,10 @@ module.exports = io => {
     })
 
     // 使用者與另一使用者私人對話窗
-    socket.on('user:connected with other', async data => {
-      const { selfId, otherId } = JSON.parse(data)
-      socket.userdata = await databaseHelpers.getUser(selfId)
+    socket.on('user:connected with other', async otherId => {
+      socket.userdata = await databaseHelpers.getUser(userId)
       const otherUser = await databaseHelpers.getUser(otherId)
-      const privateChatUserList = await databaseHelpers.getprivateChatUserList(selfId)
+      const privateChatUserList = await databaseHelpers.getprivateChatUserList(userId)
 
       if (!privateChatUserList.some(el => el.id === otherUser.id)) {
         privateChatUserList.push(otherUser)
@@ -195,8 +197,8 @@ module.exports = io => {
       let messages = await Message.findAll({
         where: {
           [Op.or]: [
-            { [Op.and]: [{ senderId: selfId }, { receiverId: otherId }] },
-            { [Op.and]: [{ senderId: otherId }, { receiverId: selfId }] }
+            { [Op.and]: [{ senderId: userId }, { receiverId: otherId }] },
+            { [Op.and]: [{ senderId: otherId }, { receiverId: userId }] }
           ]
         },
         order: [['createdAt', 'ASC']],
@@ -224,15 +226,14 @@ module.exports = io => {
     })
 
     // 已讀私人訊息
-    socket.on('message:read', async data => {
-      const { selfId, otherId } = JSON.parse(data)
-      await databaseHelpers.updateRead(selfId, otherId)
-      const notReadMessage = await databaseHelpers.checkRead(selfId)
+    socket.on('message:read', async otherId => {
+      await databaseHelpers.updateRead(userId, otherId)
+      const notReadMessage = await databaseHelpers.checkRead(userId)
 
       if (notReadMessage[0].notReadCounts > 0) {
-        mainSocket.to(selfId).emit('notify:private', notReadMessage[0].notReadCounts)
+        socket.emit('notify:private', notReadMessage[0].notReadCounts)
       } else {
-        mainSocket.to(selfId).emit('notify:noneprivate')
+        socket.emit('notify:noneprivate')
       }
     })
 
