@@ -77,6 +77,13 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
     chatMessages.appendChild(item)
   }
 
+  function renderDate (date) {
+    const item = document.createElement('div')
+    item.className = 'chatroom-date'
+    item.textContent = date
+    chatMessages.appendChild(item)
+  }
+
   socket.on('connect', () => {
     if (otherId) { // 與另一使用者私人聊天
       socket.emit('user:connected with other', otherId)
@@ -142,10 +149,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
   // 公開聊天室歷史訊息
   socket.on('history:public', data => {
     JSON.parse(data).forEach(value => {
-      const date = document.createElement('div')
-      date.className = 'chatroom-date'
-      date.textContent = value.createdAt
-      chatMessages.appendChild(date)
+      renderDate(value.createdAt)
 
       value.messages.forEach(el => {
         renderMessage(el.sender.avatar, el.description, socket.id === el.socketId, el.time)
@@ -170,6 +174,15 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
 
   // 有新訊息時
   socket.on('chat message', data => {
+    // 檢查有無今天日期
+    const lastDate = [...chatMessages.querySelectorAll('.chatroom-date')].at(-1).textContent
+    const today = new Date()
+    const formattedToday = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+
+    if (lastDate !== formattedToday) {
+      renderDate(formattedToday)
+    }
+
     const { avatar, msg, time, socketId } = JSON.parse(data)
 
     renderMessage(avatar, msg, socketId === socket.id, time)
@@ -184,7 +197,7 @@ if (location.pathname === '/chatroom' || location.pathname.slice(0, 12) === '/pr
       newestTime.textContent = '幾秒'
       userList.prepend(userCard)
 
-      socket.emit('message:read', JSON.stringify({ selfId, otherId }))
+      socket.emit('message:read', otherId)
     }
   })
 
