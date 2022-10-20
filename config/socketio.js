@@ -60,7 +60,7 @@ module.exports = io => {
 
   // notification
   mainSocket.on('connection', socket => {
-    const userId = String(socket.request.user.id)
+    const userId = socket.request.user.id
     socket.join(userId)
 
     // 檢查有無未讀私人訊息
@@ -88,7 +88,7 @@ module.exports = io => {
 
       // 發送即時通知
       subscribingUserIds.forEach(id => {
-        mainSocket.to(String(id)).emit('notify:noti') // 側邊欄點點
+        mainSocket.to(id).emit('notify:noti') // 側邊欄點點
         notiSocket.to(id).emit('notify:noti') // 通知頁
       })
     })
@@ -216,7 +216,7 @@ module.exports = io => {
 
       // 加入兩人房間
       socket.leave(socket.room)
-      socket.receiverId = otherId
+      socket.receiverId = Number(otherId)
       const room = (socket.userdata.id < otherId) ? `${socket.userdata.id}-${otherId}` : `${otherId}-${socket.userdata.id}`
       socket.room = room
       socket.join(room)
